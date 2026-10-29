@@ -17,6 +17,7 @@ import { spacing } from "@/theme/spacing";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconButton } from "@/components/ui/IconButton";
 import { Pause, Play, Square } from "lucide-react-native";
+import { mediaColors } from "@/theme/tokens";
 import { strings } from "@/constants/strings";
 import { formatClock } from "@/features/capture/CaptureSessionProvider";
 
@@ -94,7 +95,7 @@ export function CaptureScreen({
 
       {/* Live caption area */}
       <View pointerEvents="none" style={styles.caption}>
-        <Text variant="caption" style={{ color: "rgba(255,255,255,0.85)" }} align="center">
+        <Text variant="caption" style={{ color: mediaColors.captionFaint }} align="center">
           {transcriptText ?? strings.capture.liveCaptionPlaceholder}
         </Text>
       </View>
@@ -126,9 +127,9 @@ export function CaptureScreen({
               onPress={status === "paused" ? onResume : onPause}
               icon={
                 status === "paused" ? (
-                  <Play size={22} color="#FAFAFA" />
+                  <Play size={22} color={mediaColors.foreground} />
                 ) : (
-                  <Pause size={22} color="#FAFAFA" />
+                  <Pause size={22} color={mediaColors.foreground} />
                 )
               }
               style={styles.sessionButton}
@@ -136,7 +137,7 @@ export function CaptureScreen({
             <IconButton
               accessibilityLabel={strings.capture.stopRecording}
               onPress={onStop}
-              icon={<Square size={18} color="#FAFAFA" />}
+              icon={<Square size={18} color={mediaColors.foreground} />}
               style={styles.sessionButton}
             />
           </View>
@@ -170,9 +171,9 @@ export function CaptureScreen({
         pointerEvents="none"
         accessibilityLiveRegion="polite"
         accessibilityLabel={strings.capture.savedToast}
-        style={[styles.savedToast, { backgroundColor: "#BEF264" }, commandPhase === "saved" ? savedStyle : { opacity: 0 }]}
+        style={[styles.savedToast, { backgroundColor: mediaColors.toastLime }, commandPhase === "saved" ? savedStyle : { opacity: 0 }]}
       >
-        <Text variant="micro" style={{ color: "#365314" }}>
+        <Text variant="micro" style={{ color: mediaColors.toastText }}>
           {strings.capture.savedToast}
         </Text>
       </Animated.View>
@@ -233,11 +234,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "rgba(255,255,255,0.14)",
+    backgroundColor: mediaColors.buttonBg,
   },
   sessionSpacer: { width: 48 },
   mockHint: {
-    color: "rgba(255,255,255,0.5)",
+    color: mediaColors.hintFaint,
     maxWidth: 260,
     textAlign: "center",
   },

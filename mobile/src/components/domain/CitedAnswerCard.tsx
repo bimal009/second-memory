@@ -8,7 +8,7 @@ import { GradientFrame, HighlightPolygon } from "@/components/domain/FrameWithHi
 import { LocationCard } from "@/components/domain/LocationCard";
 import { interpolate } from "@/components/domain/BufferMeter";
 import type { Answer, MemoryLocation } from "@/types";
-import { limeDeep, radius } from "@/theme/tokens";
+import { highlightFill, limeDeep, radius } from "@/theme/tokens";
 import { spacing } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 import { strings } from "@/constants/strings";
@@ -45,7 +45,7 @@ export function CitedAnswerCard({ answer, location }: CitedAnswerCardProps) {
               mask={answer.highlightMask}
               aspect={4 / 3}
               stroke={stroke}
-              fill="rgba(163, 230, 53, 0.28)"
+              fill={highlightFill}
             />
           </View>
         ) : null}

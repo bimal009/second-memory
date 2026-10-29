@@ -19,6 +19,7 @@ import {
   formatClock,
 } from "@/features/capture/CaptureSessionProvider";
 import { RecordingBanner } from "@/components/domain/RecordingBanner";
+import { mediaColors } from "@/theme/tokens";
 
 /** Providers + fonts + the global RecordingBanner that lives above every screen. */
 export default function RootLayout() {
@@ -78,5 +79,5 @@ function RecordingBannerHost() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0A0A0A" },
+  root: { flex: 1, backgroundColor: mediaColors.heroBackground },
 });

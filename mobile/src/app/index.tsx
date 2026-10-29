@@ -12,7 +12,7 @@ export default function IndexGate() {
   }, []);
 
   if (settings.onboardingComplete) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(tabs)/capture" />;
   }
   return <Redirect href="/onboarding" />;
 }

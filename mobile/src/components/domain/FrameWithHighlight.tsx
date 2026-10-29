@@ -1,5 +1,6 @@
 import React from "react";
 import Svg, { Defs, LinearGradient, Rect, Circle, Polygon, Stop } from "react-native-svg";
+import { chartColors, mediaColors } from "@/theme/tokens";
 import type { Point } from "@/types";
 
 /**
@@ -17,7 +18,7 @@ export function GradientFrame({
 }) {
   const W = 100;
   const H = 100 * aspect;
-  const palette = ["#BEF264", "#84CC16", "#65A30D", "#4D7C0F", "#3F6212"];
+  const palette = chartColors;
   const a = palette[seed % palette.length]!;
   const b = palette[(seed + 2) % palette.length]!;
   const x1 = seed % 2 === 0 ? 0 : 0;
@@ -37,8 +38,8 @@ export function GradientFrame({
         </LinearGradient>
       </Defs>
       <Rect width={W} height={H} rx={corners} fill={`url(#grad-${seed})`} />
-      <Circle cx={W - cx} cy={H - cy} r={18 + (seed % 12)} fill="rgba(255,255,255,0.14)" />
-      <Circle cx={cx} cy={cy} r={10 + (seed % 8)} fill="rgba(10,10,10,0.10)" />
+      <Circle cx={W - cx} cy={H - cy} r={18 + (seed % 12)} fill={mediaColors.decoLight} />
+      <Circle cx={cx} cy={cy} r={10 + (seed % 8)} fill={mediaColors.decoDark} />
     </Svg>
   );
 }

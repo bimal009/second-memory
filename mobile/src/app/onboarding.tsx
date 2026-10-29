@@ -13,7 +13,7 @@ export default function OnboardingRoute() {
         <OnboardingScreen
           onDone={() => {
             void update({ onboardingComplete: true }).then(() => {
-              router.replace("/(tabs)");
+              router.replace("/(tabs)/capture");
             });
           }}
         />

@@ -14,8 +14,8 @@ import { GradientFrame, HighlightPolygon } from "@/components/domain/FrameWithHi
 import { LocationCard } from "@/components/domain/LocationCard";
 import { useTheme } from "@/theme/ThemeProvider";
 import { api } from "@/api";
+import { highlightFill, limeDeep, radius } from "@/theme/tokens";
 import type { Memory } from "@/types";
-import { limeDeep, radius } from "@/theme/tokens";
 import { spacing } from "@/theme/spacing";
 import { strings } from "@/constants/strings";
 
@@ -78,7 +78,7 @@ export function MemoryDetail({ id, onDelete }: MemoryDetailProps) {
               mask={memory.highlight.mask}
               aspect={4 / 3}
               stroke={stroke}
-              fill="rgba(163, 230, 53, 0.28)"
+              fill={highlightFill}
             />
           </View>
         ) : null}

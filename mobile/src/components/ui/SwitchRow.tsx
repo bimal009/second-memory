@@ -2,7 +2,7 @@ import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/ui/Text";
 import { spacing } from "@/theme/spacing";
-import { radius } from "@/theme/tokens";
+import { mediaColors, radius } from "@/theme/tokens";
 import { useTheme } from "@/theme/ThemeProvider";
 import { useHaptics } from "@/hooks/useHaptics";
 
@@ -104,7 +104,7 @@ function Switch({
           styles.knob,
           knob
             ? { backgroundColor: knob }
-            : { borderWidth: 2, borderColor: colors.ring, backgroundColor: "#FFFFFF" },
+            : { borderWidth: 2, borderColor: colors.ring, backgroundColor: mediaColors.foreground },
           value ? styles.knobRight : styles.knobLeft,
         ]}
       />

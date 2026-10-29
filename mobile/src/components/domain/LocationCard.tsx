@@ -4,7 +4,7 @@ import { MapPin } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import type { MemoryLocation } from "@/types";
 import { limeDeep, radius } from "@/theme/tokens";
-import { spacing } from "@/theme/spacing";
+import { spacing, touchTarget } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export type LocationCardProps = {
@@ -99,6 +99,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: 6,
+    minHeight: touchTarget - 4,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

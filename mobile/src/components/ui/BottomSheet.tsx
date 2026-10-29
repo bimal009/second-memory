@@ -15,7 +15,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/Text";
 import { IconButton } from "@/components/ui/IconButton";
-import { radius, motion } from "@/theme/tokens";
+import { radius, motion, mediaColors } from "@/theme/tokens";
 import { spacing } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 import { X } from "lucide-react-native";
@@ -113,13 +113,13 @@ export function BottomSheet({
 
 const styles = StyleSheet.create({
   fill: { ...ABS_FILL },
-  scrimBg: { backgroundColor: "#000000" },
+  scrimBg: { backgroundColor: mediaColors.scrim },
   sheet: {
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
     borderCurve: "continuous",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: mediaColors.sheetBorder,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     gap: spacing.lg,

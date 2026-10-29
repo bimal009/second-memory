@@ -5,9 +5,11 @@ import { ScreenContainer } from "@/components/ui/ScreenContainer";
 import { SettingsView } from "@/features/settings/SettingsView";
 import { strings } from "@/constants/strings";
 import { spacing } from "@/theme/spacing";
+import { useTheme } from "@/theme/ThemeProvider";
 
 export default function SettingsTab() {
   const [toast, setToast] = useState(false);
+  const { colors } = useTheme();
 
   return (
     <ScreenContainer scroll padBottom={16}>
@@ -22,7 +24,7 @@ export default function SettingsTab() {
       />
       {toast ? (
         <View
-          style={styles.toast}
+          style={[styles.toast, { backgroundColor: colors.primary }]}
           accessibilityLiveRegion="polite"
           accessibilityLabel={strings.settings.deletedAllToast}
         >
@@ -41,7 +43,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 24,
     alignSelf: "center",
-    backgroundColor: "#84CC16",
     borderRadius: 999,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,

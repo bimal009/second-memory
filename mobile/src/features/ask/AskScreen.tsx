@@ -156,10 +156,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#A3E635",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -74,6 +74,29 @@ export const darkColors = {
 } as const satisfies ThemeColors;
 
 /**
+ * Colors for surfaces that sit on camera media / dark hero and must not
+ * follow the theme (the Capture screen is dark regardless of theme).
+ * The ONLY raw hex values allowed outside this file live in these tables.
+ */
+export const mediaColors = {
+  heroBackground: "#0A0A0A",
+  scrim: "#000000",
+  buttonBg: "rgba(255,255,255,0.16)",
+  foreground: "#FAFAFA",
+  toastLime: "#BEF264",
+  toastText: "#365314",
+  /** Decorative overlays on media surfaces. */
+  decoLight: "rgba(255,255,255,0.14)",
+  decoDark: "rgba(10,10,10,0.10)",
+  captionFaint: "rgba(255,255,255,0.85)",
+  hintFaint: "rgba(255,255,255,0.5)",
+  sheetBorder: "rgba(255,255,255,0.1)",
+} as const;
+
+/** Highlight mask fill — semi-transparent lime over any frame. */
+export const highlightFill = "rgba(163, 230, 53, 0.28)" as const;
+
+/**
  * Deep lime used wherever lime would sit on a light surface as text/icon
  * (lime itself fails 4.5:1 contrast on white). Safe on both themes.
  */

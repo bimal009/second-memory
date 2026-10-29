@@ -86,6 +86,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: 6,
+    minHeight: touchTarget - 4,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

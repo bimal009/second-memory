@@ -1,7 +1,7 @@
 import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "@/components/ui/Text";
-import { limeDeep, radius } from "@/theme/tokens";
+import { limeDeep, mediaColors, radius } from "@/theme/tokens";
 import { spacing, touchTarget } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
@@ -37,7 +37,7 @@ function resolveColors(
     case "danger":
       return { bg: "transparent", fg: colors.destructive, border: colors.destructive };
     case "onMedia":
-      return { bg: "rgba(255,255,255,0.16)", fg: "#FFFFFF" };
+      return { bg: mediaColors.buttonBg, fg: mediaColors.foreground };
   }
 }
 

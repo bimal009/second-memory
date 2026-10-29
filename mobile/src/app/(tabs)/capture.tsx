@@ -5,6 +5,7 @@ import { CaptureScreen } from "@/features/capture/CaptureScreen";
 import { useCaptureSession } from "@/features/capture/CaptureSessionProvider";
 import { useAssistantCommand } from "@/hooks/useAssistantCommand";
 import { useSettingsContext } from "@/features/settings/context";
+import { mediaColors } from "@/theme/tokens";
 import type { CapturePlan } from "@/types";
 
 /**
@@ -62,5 +63,5 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  dark: { backgroundColor: "#0A0A0A" },
+  dark: { backgroundColor: mediaColors.heroBackground },
 });
