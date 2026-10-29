@@ -7,6 +7,8 @@ log = logging.getLogger("pipeline")
 
 def process_capture(capture_id: UUID) -> None:
     try:
+
+        
         # TODO ffmpeg split into audio + key frames (media.py)
         # TODO transcribe, describe, embed, insert memory + media rows
         log.info("process_capture %s (stub)", capture_id)

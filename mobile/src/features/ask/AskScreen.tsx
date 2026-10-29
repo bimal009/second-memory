@@ -1,165 +1,61 @@
-import React, { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
-import { Send, Search } from "lucide-react-native";
+import React, { useCallback, useState } from "react";
+import { Pressable, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import { ArrowUpRight, Search } from "lucide-react-native";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ask, getRecentQuestions, useSimulation } from "@/api";
+import { AppScreen, ResponsiveColumns, appStyles } from "@/components/ui/AppScreen";
 import { Text } from "@/components/ui/Text";
-import { Chip } from "@/components/ui/Chip";
-import { HoldToTalkButton } from "@/components/domain/HoldToTalkButton";
-import { AskResultView } from "@/features/ask/AskResultView";
-import { useAsk } from "@/features/ask/useAsk";
-import { spacing } from "@/theme/spacing";
-import { strings } from "@/constants/strings";
-import { interpolate } from "@/components/domain/BufferMeter";
+import { Button } from "@/components/ui/Button";
+import { Choices } from "@/components/ui/Choices";
+import { HoldToTalk } from "@/features/home/HoldToTalk";
+import { ConnectionBanner } from "@/components/domain/ConnectionBanner";
+import { LoadingRows, CalmEmpty } from "@/components/domain/ListStates";
+import { MemoryFrame } from "@/components/domain/MemoryFrame";
+import { PlaceMap } from "@/components/domain/PlaceMap";
+import { useHomePermissions, PermissionNotice } from "@/components/domain/PermissionNotice";
 import { usePreferences } from "@/lib/preferences";
 import { useTheme } from "@/theme/ThemeProvider";
 
-const MOCK_TRANSCRIPT = "Where is my passport?";
-
-/**
- * Voice-first Q&A: hold to ask, typed fallback, cited answer rendering.
- */
 export function AskScreen() {
-  const { settings } = usePreferences();
   const { colors } = useTheme();
-  const name = settings.assistantName;
-  const { phase, question, result, location, suggestions, ask, reset } = useAsk();
-  const [draft, setDraft] = useState("");
-
-  const submitText = () => {
-    const q = draft.trim() || question;
-    if (q) {
-      ask(q);
-      setDraft("");
-    }
-  };
-
-  return (
-    <View style={styles.fill}>
-      <View style={styles.header}>
-        <Text variant="title">{strings.ask.title}</Text>
-        <Text variant="caption" color="mutedForeground">
-          {interpolate(strings.ask.subtitle, { name })}
-        </Text>
-      </View>
-
-      {/* Result area */}
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        {phase !== "idle" ? (
-          <View style={styles.result}>
-            <AskResultView
-              phase={phase}
-              result={result}
-              location={location}
-              suggestions={suggestions}
-              assistantName={name}
-              onRetry={(q) => (q ? ask(q) : ask(question))}
-              onReset={reset}
-            />
-          </View>
-        ) : null}
-
-        {/* Example questions */}
-        <View style={styles.examples}>
-          <Text variant="micro" color="mutedForeground">
-            {strings.ask.examplesTitle}
-          </Text>
-          <View style={styles.exampleRow}>
-            {suggestions.map((s) => (
-              <Chip key={s} label={s} onPress={() => ask(s)} />
-            ))}
-          </View>
+  const { settings } = usePreferences();
+  const simulation = useSimulation();
+  const permissions = useHomePermissions();
+  const [input, setInput] = useState("");
+  const [holding, setHolding] = useState(false);
+  const name = settings.assistantName.trim() || "Aria";
+  const recent = useQuery({ queryKey: ["demo", "questions", simulation], queryFn: getRecentQuestions, retry: false });
+  const request = useMutation({ mutationFn: ask });
+  const { mutate } = request;
+  const onVoice = useCallback(() => mutate("Where's my passport?"), [mutate]);
+  const send = () => { if (input.trim()) { mutate(input.trim()); setInput(""); } };
+  const answer = request.data;
+  const best = answer?.citations[0];
+  return <AppScreen title={`Ask ${name}`} subtitle="Find a detail. Pick up a thought." scrollEnabled={!holding}>
+    <ResponsiveColumns>{[
+      <View key="question" style={appStyles.section}>
+        <HoldToTalk idleLabel="Hold to ask" processingLabel="Looking through memories..." disabled={request.isPending || permissions?.microphone.granted === false} processing={request.isPending} onSubmit={onVoice} onHoldingChange={setHolding} />
+        {permissions?.microphone.granted === false && <PermissionNotice permission="microphone" />}
+        <View style={[appStyles.row, { backgroundColor: colors.secondary, borderRadius: 16, padding: 8 }]}>
+          <Search size={18} color={colors.mutedForeground} />
+          <TextInput accessibilityLabel={`Ask ${name} a question`} placeholder="Or type your question" placeholderTextColor={colors.mutedForeground} value={input} onChangeText={setInput} onSubmitEditing={send} returnKeyType="send" style={[appStyles.flex, { minHeight: 48, color: colors.foreground, fontSize: 16, fontFamily: "Inter_400Regular" }]} />
+          <Button label="Ask" disabled={!input.trim() || request.isPending} onPress={send} style={{ borderRadius: 24, paddingHorizontal: 16 }} />
         </View>
-      </ScrollView>
-
-      {/* Bottom: hold to ask + typed fallback */}
-      <View style={styles.bottom}>
-        <HoldToTalkButton
-          label={interpolate(strings.ask.holdToAsk, { name })}
-          active={phase === "thinking"}
-          releaseHint={strings.ask.listening}
-          onHoldStart={() => ask(MOCK_TRANSCRIPT)}
-        />
-
-        <View style={[styles.fallbackRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-          <Search size={18} color={colors.mutedForeground} style={styles.searchIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder={interpolate(strings.ask.placeholder, { name })}
-            placeholderTextColor={colors.mutedForeground}
-            value={draft}
-            onChangeText={setDraft}
-            onSubmitEditing={submitText}
-            returnKeyType="send"
-            accessibilityLabel={interpolate(strings.ask.typingFallback, { name })}
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={strings.common.confirm}
-            onPress={submitText}
-            style={({ pressed }) => [
-              styles.sendBtn,
-              { backgroundColor: colors.primary },
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <Send size={18} color={colors.primaryForeground} />
-          </Pressable>
+        <View style={appStyles.section}><Text variant="heading">Recent questions</Text>
+          {recent.isPending ? <LoadingRows /> : recent.error ? <ConnectionBanner error={recent.error} onRetry={() => void recent.refetch()} /> : !recent.data?.length ? <CalmEmpty title="A clear page" body="Your recent questions will appear here." /> : recent.data.map(question => <Pressable key={question} accessibilityRole="button" disabled={request.isPending} onPress={() => mutate(question)} style={[appStyles.row, { minHeight: 56 }]}><Text variant="body" style={appStyles.flex}>{question}</Text><ArrowUpRight size={18} color={colors.mutedForeground} /></Pressable>)}
         </View>
-      </View>
-    </View>
-  );
+      </View>,
+      <View key="answer" style={appStyles.section}>
+        {request.error && <ConnectionBanner error={request.error} onRetry={() => request.variables && mutate(request.variables)} />}
+        {request.isPending ? <LoadingRows /> : answer ? answer.found && best ? <>
+          <View style={[appStyles.panel, { backgroundColor: colors.secondary }]}><Text variant="heading">Found it</Text><Text variant="body">{answer.answer}</Text><Choices values={answer.citations.map(memory => ({ value: memory.id, label: `${memory.dayLabel}, ${memory.timeLabel}` }))} selected="" onChange={id => router.push(`/memory/${id}`)} /></View>
+          <MemoryFrame uri={best.frames[0]} highlight={best.highlight} label={best.title} />
+          <PlaceMap memory={best} />
+          <Text variant="heading">Last seen</Text>
+          {answer.citations.map(memory => <Pressable key={memory.id} accessibilityRole="button" accessibilityLabel={`Open ${memory.title}`} onPress={() => router.push(`/memory/${memory.id}`)} style={[appStyles.row, { minHeight: 80 }]}><MemoryFrame compact uri={memory.frames[0]} /><View style={appStyles.flex}><Text variant="bodyMedium">{memory.place}</Text><Text variant="caption" color="mutedForeground">{memory.dayLabel}, {memory.timeLabel}</Text></View><ArrowUpRight size={18} color={colors.mutedForeground} /></Pressable>)}
+        </> : <CalmEmpty title="I don't have a memory of that" body="Try asking differently. I'll only answer from what you've saved." /> : <CalmEmpty title="Your memories, connected" body="Ask where you left something or what you planned. Answers link back to the moment." />}
+      </View>,
+    ]}</ResponsiveColumns>
+  </AppScreen>;
 }
-
-const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  header: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.xs,
-    paddingTop: spacing.md,
-  },
-  result: {},
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  examples: {
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  exampleRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  bottom: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.lg,
-    alignItems: "center",
-  },
-  fallbackRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    minHeight: 48,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-  },
-  searchIcon: { marginLeft: spacing.xs },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: spacing.sm,
-  },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

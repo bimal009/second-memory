@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StyleSheet, View } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
@@ -11,18 +11,13 @@ import {
   Inter_700Bold,
   Inter_800ExtraBold,
 } from "@expo-google-fonts/inter";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { queryClient } from "@/lib/queryClient";
 import { useBootstrap } from "@/features/bootstrap/useBootstrap";
 import { BootstrapStatus } from "@/features/bootstrap/BootstrapStatus";
 import { ThemeProvider } from "@/theme/ThemeProvider";
-import {
-  CaptureSessionProvider,
-  useCaptureSession,
-  formatClock,
-} from "@/features/capture/CaptureSessionProvider";
-import { RecordingBanner } from "@/components/domain/RecordingBanner";
-import { mediaColors } from "@/theme/tokens";
+import { RecordingProvider, RecordingGate } from "@/features/recording/RecordingProvider";
+import { lightColors } from "@/theme/tokens";
 import { registerDevice } from "@/lib/push";
 
 export default function RootLayout() {
@@ -40,12 +35,12 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <CaptureSessionProvider>
           <ThemeProvider>
-            <StatusBar style="auto" />
+            <RecordingProvider>
+            <StatusBar style="dark" />
             <RootNavigator />
+            </RecordingProvider>
           </ThemeProvider>
-        </CaptureSessionProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
   );
@@ -53,18 +48,22 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const state = useBootstrap();
+  const pathname = usePathname();
+  const preview = pathname === "/home-preview";
 
   useEffect(() => {
     if (state === "ready") void registerDevice();
   }, [state]);
 
-  if (state === "loading" || state === "retry") {
+  if (!preview && (state === "loading" || state === "retry")) {
     return <BootstrapStatus failed={state === "retry"} />;
   }
 
   return (
     <View style={styles.root}>
+      <RecordingGate enabled={state === "ready"} />
       <Stack screenOptions={{ headerShown: false, animation: "none" }}>
+        <Stack.Screen name="home-preview" />
         <Stack.Protected guard={state === "needsOnboarding"}>
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
@@ -74,35 +73,14 @@ function RootNavigator() {
         <Stack.Protected guard={state === "ready"}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="memory/[id]" />
+          <Stack.Screen name="session" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="privacy-receipt" options={{ animation: "slide_from_right" }} />
         </Stack.Protected>
       </Stack>
-      <RecordingBannerHost />
-    </View>
-  );
-}
-
-function RecordingBannerHost() {
-  const { status, elapsedSec, pause, resume } = useCaptureSession();
-  const insets = useSafeAreaInsets();
-
-  if (status === "idle") return null;
-
-  return (
-    <View
-      pointerEvents="box-none"
-      style={{ position: "absolute", top: 0, left: 0, right: 0, paddingTop: insets.top }}
-    >
-      <RecordingBanner
-        visible
-        paused={status === "paused"}
-        timer={formatClock(elapsedSec)}
-        onPause={pause}
-        onResume={resume}
-      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: mediaColors.heroBackground },
+  root: { flex: 1, backgroundColor: lightColors.background },
 });

@@ -1,12 +1,9 @@
 import React, {
   createContext,
   useContext,
-  useMemo,
   type PropsWithChildren,
 } from "react";
-import { useColorScheme } from "react-native";
-import { darkColors, lightColors, type ThemeColors } from "@/theme/tokens";
-import { usePreferences } from "@/lib/preferences";
+import { lightColors, type ThemeColors } from "@/theme/tokens";
 import type { AppearanceMode } from "@/types";
 
 type ThemeContextValue = {
@@ -16,22 +13,14 @@ type ThemeContextValue = {
 };
 
 const ThemeCtx = createContext<ThemeContextValue | null>(null);
+const lightTheme: ThemeContextValue = {
+  colors: lightColors,
+  isDark: false,
+  mode: "light",
+};
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const { settings } = usePreferences();
-  const system = useColorScheme();
-  const isDark =
-    settings.appearance === "system"
-      ? system === "dark"
-      : settings.appearance === "dark";
-  const colors = isDark ? darkColors : lightColors;
-
-  const value = useMemo<ThemeContextValue>(
-    () => ({ colors, isDark, mode: settings.appearance }),
-    [colors, isDark, settings.appearance],
-  );
-
-  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
+  return <ThemeCtx.Provider value={lightTheme}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme(): ThemeContextValue {

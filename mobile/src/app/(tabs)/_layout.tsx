@@ -1,16 +1,16 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Camera, FolderOpen, CalendarDays, Settings, MessageCircle } from "lucide-react-native";
+import { House, FolderOpen, Bell, Settings, MessageCircle } from "lucide-react-native";
 import { StatusBar } from "expo-status-bar";
 import { useTheme } from "@/theme/ThemeProvider";
 import { limeDeep } from "@/theme/tokens";
-import { strings } from "@/constants/strings";
+import { SessionRunningBanner } from "@/features/recording/RecordingProvider";
 
 const TAB_ICONS = {
-  capture: Camera,
+  capture: House,
   ask: MessageCircle,
   memories: FolderOpen,
-  today: CalendarDays,
+  today: Bell,
   settings: Settings,
 } as const;
 
@@ -22,6 +22,7 @@ export default function TabsLayout() {
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
+      <SessionRunningBanner />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -39,7 +40,7 @@ export default function TabsLayout() {
       >
         {tabs.map((name) => {
           const Icon = TAB_ICONS[name];
-          const label = strings.tabs[name];
+          const label = { capture: "Home", ask: "Ask", memories: "Memories", today: "Reminders", settings: "Settings" }[name];
           return (
             <Tabs.Screen
               key={name}

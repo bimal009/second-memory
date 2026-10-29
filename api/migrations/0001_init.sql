@@ -20,7 +20,6 @@ CREATE TABLE devices (
 );
 CREATE INDEX devices_user_idx ON devices (user_id);
 
--- one row per trigger: a quick moment, or a whole listening session
 CREATE TABLE captures (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -38,7 +37,6 @@ CREATE TABLE captures (
     lat             double precision CHECK (lat BETWEEN -90 AND 90),
     lng             double precision CHECK (lng BETWEEN -180 AND 180),
     accuracy_m      real,
-    -- privacy receipt: what reached the server and what happened to it
     file_count      integer NOT NULL DEFAULT 0,
     upload_bytes    bigint NOT NULL DEFAULT 0,
     audio_seconds   real,
@@ -96,7 +94,6 @@ CREATE TABLE media (
 CREATE INDEX media_memory_idx ON media (memory_id, kind);
 CREATE INDEX media_user_idx   ON media (user_id);
 
--- every time an object was seen: powers "where is my X, and where was it before?"
 CREATE TABLE sightings (
     id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -137,7 +134,6 @@ CREATE TABLE daily_recaps (
     UNIQUE (user_id, day)
 );
 
--- cost and latency log: tracks credit burn, feeds the README numbers and the privacy receipt
 CREATE TABLE model_calls (
     id            bigserial PRIMARY KEY,
     user_id       uuid REFERENCES users(id) ON DELETE CASCADE,

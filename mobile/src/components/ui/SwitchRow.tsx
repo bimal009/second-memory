@@ -1,156 +1,48 @@
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
+import { Check, Minus } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 import { Text } from "@/components/ui/Text";
 import { spacing } from "@/theme/spacing";
-import { mediaColors, radius } from "@/theme/tokens";
 import { useTheme } from "@/theme/ThemeProvider";
-import { useHaptics } from "@/hooks/useHaptics";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export type SwitchRowProps = {
-  label: string;
-  sublabel?: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-  disabled?: boolean;
-  /** e.g. "Coming soon" next to the switch. */
-  note?: string;
-  destructive?: boolean;
+  label: string; sublabel?: string; value: boolean;
+  onValueChange: (value: boolean) => void; disabled?: boolean;
+  note?: string; destructive?: boolean;
 };
 
-export function SwitchRow({
-  label,
-  sublabel,
-  value,
-  onValueChange,
-  disabled,
-  note,
-  destructive,
-}: SwitchRowProps) {
+export function SwitchRow({ label, sublabel, value, onValueChange, disabled, note, destructive }: SwitchRowProps) {
   const { colors } = useTheme();
-  const haptics = useHaptics();
-
-  const handle = () => {
-    haptics.light();
-    onValueChange(!value);
-  };
-
-  return (
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityLabel={label}
-      accessibilityHint={sublabel}
-      accessibilityState={{ disabled, checked: value }}
-      onPress={handle}
-      disabled={disabled}
-      hitSlop={{ top: spacing.sm, bottom: spacing.sm }}
-    >
-      <View style={styles.row}>
-        <View style={styles.textBlock}>
-          <View style={styles.titleRow}>
-            <Text
-              variant="bodyMedium"
-              color={destructive ? "destructive" : "foreground"}
-            >
-              {label}
-            </Text>
-            {note ? (
-              <View style={[styles.note, { backgroundColor: colors.muted }]}>
-                <Text variant="micro" color="mutedForeground">
-                  {note}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          {sublabel ? (
-            <Text variant="caption" color="mutedForeground">
-              {sublabel}
-            </Text>
-          ) : null}
-        </View>
-        <Switch value={value} onToggle={handle} disabled={disabled} />
-      </View>
-    </Pressable>
-  );
+  const reduced = useReducedMotion();
+  const [position] = useState(() => new Animated.Value(value ? 20 : 0));
+  useEffect(() => {
+    const animation = Animated.timing(position, { toValue: value ? 20 : 0, duration: reduced ? 0 : 160, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [position, value, reduced]);
+  return <Pressable
+    accessibilityRole="switch" accessibilityLabel={label} accessibilityHint={sublabel}
+    accessibilityState={{ checked: value, disabled }} disabled={disabled}
+    onPress={() => { void Haptics.selectionAsync().catch(() => {}); onValueChange(!value); }}
+    style={({ pressed }) => [styles.row, { opacity: disabled ? .45 : pressed ? .65 : 1 }]}
+  >
+    <View style={styles.text}>
+      <Text variant="bodyMedium" color={destructive ? "destructive" : "foreground"}>{label}</Text>
+      {sublabel && <Text variant="caption" color="mutedForeground">{sublabel}</Text>}
+      {note && <Text variant="caption" color="mutedForeground">{note}</Text>}
+    </View>
+    <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[styles.track, { backgroundColor: value ? colors.primary : colors.border }]}>
+      <Animated.View style={[styles.thumb, { backgroundColor: colors.card, transform: [{ translateX: position }] }]}>
+        {value ? <Check size={14} strokeWidth={2.5} color={colors.primaryForeground} /> : <Minus size={12} color={colors.mutedForeground} />}
+      </Animated.View>
+    </View>
+  </Pressable>;
 }
-
-function Switch({
-  value,
-  onToggle,
-  disabled,
-}: {
-  value: boolean;
-  onToggle: () => void;
-  disabled?: boolean;
-}) {
-  const { colors } = useTheme();
-  const bg = value ? colors.primary : colors.secondary;
-  const knob = value ? colors.primaryForeground : "transparent";
-
-  return (
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityLabel=""
-      onPress={onToggle}
-      disabled={disabled}
-      hitSlop={{ top: spacing.sm, bottom: spacing.sm, left: spacing.sm, right: spacing.sm }}
-      style={[
-        styles.track,
-        { backgroundColor: bg },
-        disabled && { opacity: 0.4 },
-      ]}
-    >
-      <View
-        style={[
-          styles.knob,
-          knob
-            ? { backgroundColor: knob }
-            : { borderWidth: 2, borderColor: colors.ring, backgroundColor: mediaColors.foreground },
-          value ? styles.knobRight : styles.knobLeft,
-        ]}
-      />
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.lg,
-    minHeight: 44,
-    paddingVertical: spacing.sm,
-  },
-  textBlock: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  note: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-  },
-  track: {
-    width: 48,
-    height: 30,
-    borderRadius: 15,
-    padding: 2,
-    justifyContent: "center",
-  },
-  knob: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-  },
-  knobLeft: {
-    alignSelf: "flex-start",
-  },
-  knobRight: {
-    alignSelf: "flex-end",
-  },
+  row: { minHeight: 64, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.lg, paddingVertical: spacing.md },
+  text: { flex: 1, minWidth: 0, gap: spacing.xs },
+  track: { width: 54, height: 34, borderRadius: 17, padding: 4, flexShrink: 0 },
+  thumb: { width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center" },
 });

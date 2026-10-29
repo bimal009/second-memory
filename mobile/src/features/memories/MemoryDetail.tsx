@@ -1,188 +1,59 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { ScrollView, View } from "react-native";
 import { router } from "expo-router";
-import { ChevronLeft, Eye, EyeOff, Trash2 } from "lucide-react-native";
-import { Card } from "@/components/ui/Card";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteMemory, getMemories, getMemory, useSimulation } from "@/api";
+import { AppScreen, ResponsiveColumns, appStyles } from "@/components/ui/AppScreen";
 import { Text } from "@/components/ui/Text";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { IconButton } from "@/components/ui/IconButton";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { SwitchRow } from "@/components/ui/SwitchRow";
+import { Choices } from "@/components/ui/Choices";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { ScreenContainer } from "@/components/ui/ScreenContainer";
-import { GradientFrame, HighlightPolygon } from "@/components/domain/FrameWithHighlight";
-import { LocationCard } from "@/components/domain/LocationCard";
+import { LoadingRows, CalmEmpty } from "@/components/domain/ListStates";
+import { ConnectionBanner } from "@/components/domain/ConnectionBanner";
+import { MemoryFrame } from "@/components/domain/MemoryFrame";
+import { PlaceMap } from "@/components/domain/PlaceMap";
+import { ReminderEditor } from "@/components/domain/ReminderEditor";
 import { useTheme } from "@/theme/ThemeProvider";
-import { api } from "@/api";
-import { highlightFill, limeDeep, radius } from "@/theme/tokens";
-import type { Memory } from "@/types";
-import { spacing } from "@/theme/spacing";
-import { strings } from "@/constants/strings";
 
-export type MemoryDetailProps = {
-  id: string;
-  onDelete: (id: string) => void;
-};
-
+export type MemoryDetailProps = { id: string; onDelete: (id: string) => void };
 export function MemoryDetail({ id, onDelete }: MemoryDetailProps) {
   const { colors } = useTheme();
-  const [memory, setMemory] = useState<Memory | null>(null);
-  const [missing, setMissing] = useState(false);
-  const [highlightOn, setHighlightOn] = useState(true);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    let live = true;
-    api.getMemory(id).then((m) => {
-      if (!live) return;
-      if (!m) {
-        setMissing(true);
-      } else {
-        setMemory(m);
-      }
-    });
-    return () => {
-      live = false;
-    };
-  }, [id]);
-
-  if (missing || !memory) {
-    return (
-      <ScreenContainer>
-        <View style={styles.skeletonWrap}>
-          <Skeleton height={220} style={styles.gapBelow} />
-          <Skeleton width="50%" style={styles.gapBelow} />
-          <Skeleton height={12} width="90%" />
-        </View>
-      </ScreenContainer>
-    );
-  }
-
-  const stroke = colors.isDark ? colors.primary : limeDeep;
-
-  return (
-    <ScreenContainer scroll padBottom={24}>
-      <View style={styles.backRow}>
-        <IconButton
-          accessibilityLabel={strings.common.back}
-          onPress={() => router.back()}
-          icon={<ChevronLeft size={20} color={colors.foreground} />}
-        />
-      </View>
-      {/* Large frame with highlight toggle */}
-      <View style={styles.frameWrap}>
-        <GradientFrame seed={memory.frameSeed} aspect={4 / 3} corners={radius.base} />
-        {highlightOn && memory.highlight ? (
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <HighlightPolygon
-              mask={memory.highlight.mask}
-              aspect={4 / 3}
-              stroke={stroke}
-              fill={highlightFill}
-            />
-          </View>
-        ) : null}
-        <View style={styles.toggle}>
-          <IconButton
-            accessibilityLabel={
-              highlightOn
-                ? strings.memories.detail.highlightOn
-                : strings.memories.detail.highlightOff
-            }
-            onPress={() => setHighlightOn((v) => !v)}
-            selected={highlightOn}
-            icon={
-              highlightOn ? (
-                <EyeOff size={18} color={colors.primaryForeground} />
-              ) : (
-                <Eye size={18} color={colors.foreground} />
-              )
-            }
-          />
-        </View>
-      </View>
-
+  const simulation = useSimulation();
+  const client = useQueryClient();
+  const [highlight, setHighlight] = useState(true);
+  const [width, setWidth] = useState(300);
+  const [index, setIndex] = useState(0);
+  const [confirm, setConfirm] = useState(false);
+  const [reminder, setReminder] = useState(false);
+  const query = useQuery({ queryKey: ["demo", "memory", id, simulation], queryFn: () => getMemory(id), retry: false });
+  const history = useQuery({ queryKey: ["demo", "memories", simulation], queryFn: () => getMemories(), retry: false });
+  const deletion = useMutation({ mutationFn: () => deleteMemory(id), onSuccess: () => { void client.invalidateQueries({ queryKey: ["demo"] }); onDelete(id); } });
+  const memory = query.data;
+  const sightings = history.data?.filter(item => item.id !== id && memory?.tags[0] && item.tags.includes(memory.tags[0])) ?? [];
+  return <AppScreen title="Memory" back>
+    {query.isPending ? <LoadingRows /> : query.error ? <ConnectionBanner error={query.error} onRetry={() => void query.refetch()} /> : !memory ? <CalmEmpty title="This memory isn't here" body="It may have been deleted. Return to Memories to find another moment." /> : <>
       <Text variant="title">{memory.title}</Text>
-      <Text variant="caption" color="mutedForeground">
-        {memory.startedAtLabel} · {memory.kind}
-      </Text>
-
-      <View style={styles.tagsRow}>
-        {memory.tags.map((t) => (
-          <Badge key={t} label={t} tone="outline" />
-        ))}
-      </View>
-
-      <Card padding="lg">
-        <Text variant="micro" color="mutedForeground">
-          {strings.memories.detail.transcriptTitle}
-        </Text>
-        <Text variant="body">{memory.transcript}</Text>
-        <Text variant="caption" color="mutedForeground">
-          {memory.summary}
-        </Text>
-      </Card>
-
-      {memory.location ? <LocationCard location={memory.location} /> : null}
-
-      <Button
-        label={strings.memories.detail.delete}
-        variant="danger"
-        onPress={() => setConfirmOpen(true)}
-        icon={<Trash2 size={18} color={colors.destructive} />}
-      />
-
-      <BottomSheet
-        visible={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        title={strings.memories.detail.deleteConfirmTitle}
-      >
-        <Text variant="caption" color="mutedForeground">
-          {strings.memories.detail.deleteConfirmBody}
-        </Text>
-        <Button
-          label={strings.common.delete}
-          variant="danger"
-          onPress={() => {
-            setConfirmOpen(false);
-            onDelete(memory.id);
-          }}
-          icon={<Trash2 size={18} color={colors.destructive} />}
-        />
-        <Button
-          label={strings.common.cancel}
-          variant="secondary"
-          onPress={() => setConfirmOpen(false)}
-        />
-      </BottomSheet>
-    </ScreenContainer>
-  );
+      <Text variant="caption" color="mutedForeground">{memory.dayLabel}, {memory.timeLabel} · {memory.source}</Text>
+      <ResponsiveColumns>{[
+        <View key="media" style={appStyles.section}>
+          <View onLayout={event => setWidth(event.nativeEvent.layout.width)}>
+            {memory.frames.length ? <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={event => setIndex(Math.round(event.nativeEvent.contentOffset.x / width))}>{memory.frames.map((uri, frame) => <View key={uri} style={{ width }}><MemoryFrame uri={uri} label={`${memory.title}, frame ${frame + 1}`} highlight={highlight ? memory.highlight : undefined} /></View>)}</ScrollView> : <MemoryFrame />}
+          </View>
+          {memory.frames.length > 1 && <Text variant="caption" color="mutedForeground">Frame {Math.min(index + 1, memory.frames.length)} of {memory.frames.length}</Text>}
+          {memory.highlight && <SwitchRow label="Show highlight" sublabel="The object found in this frame" value={highlight} onValueChange={setHighlight} />}
+          {memory.place !== "Location off" && <PlaceMap memory={memory} />}
+        </View>,
+        <View key="details" style={appStyles.section}>
+          <View style={[appStyles.panel, { backgroundColor: colors.secondary }]}><Text variant="heading">Note</Text><Text variant="body">{memory.title}</Text><Text variant="caption" color="mutedForeground">Source: {memory.source}</Text></View>
+          <Choices values={memory.tags.map(tag => ({ value: tag, label: tag }))} selected="" onChange={() => {}} />
+          <View style={appStyles.section}><Text variant="heading">Last seen history</Text>{history.isPending ? <LoadingRows /> : history.error ? <ConnectionBanner error={history.error} onRetry={() => void history.refetch()} /> : !sightings.length ? <Text variant="body" color="mutedForeground">This is the first saved sighting.</Text> : sightings.map(item => <Button key={item.id} label={`${item.dayLabel}, ${item.timeLabel} · ${item.place}`} variant="secondary" onPress={() => router.push(`/memory/${item.id}`)} />)}</View>
+          <Button label="Add reminder" onPress={() => setReminder(true)} style={{ borderRadius: 28 }} />
+          <Button label="Delete this memory" variant="danger" onPress={() => setConfirm(true)} style={{ borderRadius: 28 }} />
+        </View>,
+      ]}</ResponsiveColumns>
+      <ReminderEditor key={memory.id} visible={reminder} onClose={() => setReminder(false)} initialText={memory.title} source={memory.source === "Session" ? "Session" : "Voice"} />
+    </>}
+    <BottomSheet visible={confirm} title="Delete this memory?" onClose={() => !deletion.isPending && setConfirm(false)}><Text variant="body">Its text and frames will be removed.</Text>{deletion.error && <ConnectionBanner error={deletion.error} onRetry={() => deletion.mutate()} />}<Button label="Delete memory" variant="danger" loading={deletion.isPending} onPress={() => deletion.mutate()} /><Button label="Keep memory" variant="secondary" disabled={deletion.isPending} onPress={() => setConfirm(false)} /></BottomSheet>
+  </AppScreen>;
 }
-
-const styles = StyleSheet.create({
-  backRow: {
-    marginHorizontal: -spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  skeletonWrap: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.md,
-  },
-  gapBelow: { marginBottom: spacing.md },
-  frameWrap: {
-    position: "relative",
-    aspectRatio: 4 / 3,
-    borderRadius: radius.base,
-    overflow: "hidden",
-  },
-  toggle: {
-    position: "absolute",
-    top: spacing.md,
-    right: spacing.md,
-  },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-});

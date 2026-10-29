@@ -104,5 +104,10 @@ export type AppSettings = {
   recordingPaused: boolean;
   bufferMinutes: BufferMinutes;
   faceBlur: boolean;
+  defaultClipSeconds?: number;
+  locationEnabled?: boolean;
+  speakReplies?: boolean;
+  pushToTalkMode?: "audio" | "video";
+  sessionMode?: "audio" | "video";
   connectedSources: ConnectedSource[];
 };

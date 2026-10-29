@@ -2,7 +2,9 @@ import React, { useCallback, useEffect } from "react";
 import {
   BackHandler,
   Modal,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
@@ -75,7 +77,7 @@ export function BottomSheet({
 
   return (
     <Modal transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
-      <View style={styles.fill}>
+      <View style={[styles.fill, { justifyContent: "flex-end", paddingTop: insets.top }]}>
         <Animated.View style={[styles.fill, styles.scrimBg, scrim]}>
           <Pressable
             accessibilityRole="button"
@@ -85,7 +87,9 @@ export function BottomSheet({
           />
         </Animated.View>
         <Animated.View
-          accessibilityRole="dialog"
+          accessibilityRole={Platform.OS === "web" ? "dialog" : undefined}
+          accessibilityViewIsModal
+          onAccessibilityEscape={handleClose}
           accessibilityLabel={title ?? "Sheet"}
           style={[
             sheet,
@@ -96,7 +100,7 @@ export function BottomSheet({
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           {title ? (
             <View style={styles.header}>
-              <Text variant="heading">{title}</Text>
+              <Text variant="heading" accessibilityRole="header">{title}</Text>
               <IconButton
                 accessibilityLabel="Close"
                 onPress={handleClose}
@@ -104,7 +108,7 @@ export function BottomSheet({
               />
             </View>
           ) : null}
-          <View style={styles.body}>{children}</View>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.body}>{children}</ScrollView>
         </Animated.View>
       </View>
     </Modal>
@@ -115,6 +119,10 @@ const styles = StyleSheet.create({
   fill: { ...ABS_FILL },
   scrimBg: { backgroundColor: mediaColors.scrim },
   sheet: {
+    width: "100%",
+    maxWidth: 640,
+    maxHeight: "90%",
+    alignSelf: "center",
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
     borderCurve: "continuous",
