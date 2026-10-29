@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -12,7 +12,9 @@ import {
   Inter_800ExtraBold,
 } from "@expo-google-fonts/inter";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { BootstrapGuard } from "@/features/bootstrap/BootstrapGuard";
+import { queryClient } from "@/lib/queryClient";
+import { useBootstrap } from "@/features/bootstrap/useBootstrap";
+import { BootstrapStatus } from "@/features/bootstrap/BootstrapStatus";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 import {
   CaptureSessionProvider,
@@ -21,10 +23,10 @@ import {
 } from "@/features/capture/CaptureSessionProvider";
 import { RecordingBanner } from "@/components/domain/RecordingBanner";
 import { mediaColors } from "@/theme/tokens";
+import { registerDevice } from "@/lib/push";
 
 export default function RootLayout() {
-  const [queryClient] = useState(() => new QueryClient());
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -32,9 +34,8 @@ export default function RootLayout() {
     Inter_800ExtraBold,
   });
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  if (fontError) throw fontError;
+  if (!fontsLoaded) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -42,21 +43,41 @@ export default function RootLayout() {
         <CaptureSessionProvider>
           <ThemeProvider>
             <StatusBar style="auto" />
-            <BootstrapGuard>
-              <View style={styles.root}>
-                <Stack screenOptions={{ headerShown: false, animation: "none" }}>
-                  <Stack.Screen name="onboarding" />
-                  <Stack.Screen name="permissions" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="memory/[id]" />
-                </Stack>
-                <RecordingBannerHost />
-              </View>
-            </BootstrapGuard>
+            <RootNavigator />
           </ThemeProvider>
         </CaptureSessionProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
+  );
+}
+
+function RootNavigator() {
+  const state = useBootstrap();
+
+  useEffect(() => {
+    if (state === "ready") void registerDevice();
+  }, [state]);
+
+  if (state === "loading" || state === "retry") {
+    return <BootstrapStatus failed={state === "retry"} />;
+  }
+
+  return (
+    <View style={styles.root}>
+      <Stack screenOptions={{ headerShown: false, animation: "none" }}>
+        <Stack.Protected guard={state === "needsOnboarding"}>
+          <Stack.Screen name="onboarding" />
+        </Stack.Protected>
+        <Stack.Protected guard={state === "needsPermissions"}>
+          <Stack.Screen name="permissions" />
+        </Stack.Protected>
+        <Stack.Protected guard={state === "ready"}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="memory/[id]" />
+        </Stack.Protected>
+      </Stack>
+      <RecordingBannerHost />
+    </View>
   );
 }
 

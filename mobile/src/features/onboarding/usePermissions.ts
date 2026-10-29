@@ -1,32 +1,52 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppState } from "react-native";
-import { permissionKeys, readPermissions, requestPermission, type PermissionKey, type Permissions } from "@/lib/permissions";
+import { useQuery } from "@tanstack/react-query";
+import {
+  permissionKeys,
+  readPermissions,
+  requestPermission,
+  type PermissionKey,
+} from "@/lib/permissions";
+
 export function usePermissions() {
-  const [status, setStatus] = useState<Permissions | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const refresh = useCallback(async () => { setStatus(await readPermissions()); }, []);
+  const { data: status, refetch } = useQuery({
+    queryKey: ["permissions"],
+    queryFn: readPermissions,
+    gcTime: 0,
+  });
+
   useEffect(() => {
-    const check = () => { void refresh().catch(() => setError("Could not check permissions. Try again.")); };
-    check();
-    const sub = AppState.addEventListener("change", value => { if (value === "active") check(); });
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active") void refetch();
+    });
     return () => sub.remove();
-  }, [refresh]);
-  const recheck = async () => {
-    setError(null);
-    try { await refresh(); } catch { setError("Could not check permissions. Try again."); }
-  };
+  }, [refetch]);
+
   const allow = async (key?: PermissionKey) => {
-    if (busy) return;
-    setBusy(true); setError(null);
+    if (!status || busy) return;
+    setBusy(true);
+    setError(null);
     try {
-      const current = await readPermissions();
-      for (const item of key ? [key] : permissionKeys) {
-        if (!current[item].granted && current[item].canAskAgain) await requestPermission(item);
+      for (const k of key ? [key] : permissionKeys) {
+        if (!status[k].granted && status[k].canAskAgain) {
+          try {
+            await requestPermission(k);
+          } catch {
+            setError(k === "notifications"
+              ? "Notifications are unavailable right now. You can continue without them and try again later."
+              : "Could not request permission. Please try again or open phone settings.");
+          }
+        }
       }
-      await refresh();
-    } catch { setError("Could not update permissions. Try again."); }
-    finally { setBusy(false); }
+    } catch {
+      setError("Could not update permissions. Please try again.");
+    } finally {
+      await refetch();
+      setBusy(false);
+    }
   };
-  return { status, busy, error, allow, refresh, recheck };
+
+  return { status: status ?? null, busy, error, allow };
 }

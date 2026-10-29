@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
-import {
-  Brain,
-  ArrowRight,
-} from "lucide-react-native";
+import { Brain, ArrowRight } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -18,40 +15,57 @@ export function OnboardingScreen() {
   const { colors } = useTheme();
   const [name, setName] = useState("");
   const [nameFocused, setNameFocused] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [emptyError, setEmptyError] = useState(false);
   const onboard = useOnboard();
   const accent = colors.isDark ? colors.primary : limeDeep;
-  const continueSetup = async () => {
-    if (saving) return;
-    if (!name.trim() || name.trim().length > 30) { setError("Enter a name between 1 and 30 characters."); return; }
-    setSaving(true);
-    setError(null);
-    try {
-      let timezone = "UTC";
-      try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { /* Use UTC. */ }
-      await onboard.mutateAsync({ assistant_name: name.trim(), timezone });
-    } catch {
-      setError(strings.onboarding.saveError);
-    } finally { setSaving(false); }
+  const trimmed = name.trim();
+  const error = emptyError
+    ? "Enter a name between 1 and 30 characters."
+    : onboard.isError
+      ? strings.onboarding.saveError
+      : null;
+
+  const submit = () => {
+    if (!trimmed) {
+      setEmptyError(true);
+      return;
+    }
+    setEmptyError(false);
+    onboard.mutate({
+      assistant_name: trimmed,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    });
   };
-  return <View style={styles.container}>
+  return (
+    <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.brandRow}>
           <View style={[styles.brandMark, { backgroundColor: colors.primary }]}>
             <Brain size={24} color={colors.primaryForeground} />
           </View>
-          <Text variant="micro" style={styles.eyebrow}>{strings.appName.toUpperCase()}</Text>
+          <Text variant="micro" style={styles.eyebrow}>
+            {strings.appName.toUpperCase()}
+          </Text>
         </View>
-        <Text variant="display" style={styles.heroTitle}>{name.trim() ? "Meet " + name.trim() : strings.onboarding.title}</Text>
+        <Text variant="display" style={styles.heroTitle}>
+          {trimmed ? "Meet " + trimmed : strings.onboarding.title}
+        </Text>
         <Text variant="caption" color="mutedForeground">
           {strings.onboarding.subtitle}
         </Text>
       </View>
 
       {/* Assistant name */}
-      <Card padding="xl" style={[styles.nameCard, { backgroundColor: colors.secondary, borderColor: colors.secondary }]}>
-        <Text variant="micro" color="mutedForeground" style={styles.eyebrow}>{strings.onboarding.nameStep}</Text>
+      <Card
+        padding="xl"
+        style={[
+          styles.nameCard,
+          { backgroundColor: colors.secondary, borderColor: colors.secondary },
+        ]}
+      >
+        <Text variant="micro" color="mutedForeground" style={styles.eyebrow}>
+          {strings.onboarding.nameStep}
+        </Text>
         <Text variant="heading">{strings.onboarding.assistantPrompt}</Text>
         <Text variant="caption" color="mutedForeground">
           {strings.onboarding.assistantHint}
@@ -67,15 +81,35 @@ export function OnboardingScreen() {
           placeholder={strings.onboarding.assistantPlaceholder}
           placeholderTextColor={colors.mutedForeground}
           maxLength={30}
-          style={[styles.nameInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: nameFocused ? accent : colors.input }]}
+          style={[
+            styles.nameInput,
+            {
+              color: colors.foreground,
+              backgroundColor: colors.card,
+              borderColor: nameFocused ? accent : colors.input,
+            },
+          ]}
         />
       </Card>
 
       <View style={styles.footer}>
-        {error ? <Text variant="caption" color="destructive" accessibilityRole="alert">{error}</Text> : null}
-        <Button label={error ? "Retry" : strings.onboarding.continue} size="lg" fullWidth loading={saving} disabled={saving} icon={<ArrowRight size={18} color={colors.primaryForeground} />} onPress={() => { void continueSetup(); }} />
+        {error ? (
+          <Text variant="caption" color="destructive" accessibilityRole="alert">
+            {error}
+          </Text>
+        ) : null}
+        <Button
+          label={error ? "Retry" : strings.onboarding.continue}
+          size="lg"
+          fullWidth
+          loading={onboard.isPending}
+          disabled={onboard.isPending}
+          icon={<ArrowRight size={18} color={colors.primaryForeground} />}
+          onPress={submit}
+        />
       </View>
-    </View>;
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -98,8 +132,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     fontSize: 16,
   },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.sm },
-  brandMark: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  brandMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   eyebrow: { letterSpacing: 1.6 },
   heroTitle: { letterSpacing: -1.3, maxWidth: 310 },
   nameCard: { gap: spacing.sm, borderRadius: 24 },

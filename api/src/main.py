@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from src import migrate
 from src.db import pool
 from src.routers.health import router as health_router
+from src.routers.me import router as me_router
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("second-memory")
@@ -29,9 +30,10 @@ async def lifespan(app: FastAPI):
         pool.close()
         raise
 
-    yield
-
-    pool.close()
+    try:
+        yield
+    finally:
+        pool.close()
 
 
 app = FastAPI(
@@ -42,3 +44,5 @@ app = FastAPI(
 )
 
 app.include_router(health_router)
+
+app.include_router(me_router)

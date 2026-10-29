@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE TABLE users (
     id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -19,30 +20,45 @@ CREATE TABLE devices (
 );
 CREATE INDEX devices_user_idx ON devices (user_id);
 
--- one row per trigger ("Hey {name}, remember this")
+-- one row per trigger: a quick moment, or a whole listening session
 CREATE TABLE captures (
-    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    status       text NOT NULL DEFAULT 'processing'
-                 CHECK (status IN ('processing', 'ready', 'failed')),
-    error        text,
-    command_text text,
-    plan         jsonb NOT NULL,
-    clip_start   timestamptz,
-    clip_end     timestamptz,
-    lat          double precision CHECK (lat BETWEEN -90 AND 90),
-    lng          double precision CHECK (lng BETWEEN -180 AND 180),
-    accuracy_m   real,
-    created_at   timestamptz NOT NULL DEFAULT now(),
-    processed_at timestamptz
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind            text NOT NULL DEFAULT 'moment'
+                    CHECK (kind IN ('moment', 'session')),
+    source          text NOT NULL DEFAULT 'phone'
+                    CHECK (source IN ('phone', 'glasses', 'import')),
+    status          text NOT NULL DEFAULT 'processing'
+                    CHECK (status IN ('recording', 'processing', 'ready', 'failed')),
+    error           text,
+    command_text    text,
+    plan            jsonb NOT NULL,
+    clip_start      timestamptz,
+    clip_end        timestamptz,
+    lat             double precision CHECK (lat BETWEEN -90 AND 90),
+    lng             double precision CHECK (lng BETWEEN -180 AND 180),
+    accuracy_m      real,
+    -- privacy receipt: what reached the server and what happened to it
+    file_count      integer NOT NULL DEFAULT 0,
+    upload_bytes    bigint NOT NULL DEFAULT 0,
+    audio_seconds   real,
+    frames_analyzed integer NOT NULL DEFAULT 0,
+    raw_deleted_at  timestamptz,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    ended_at        timestamptz,
+    processed_at    timestamptz
 );
 CREATE INDEX captures_user_created_idx ON captures (user_id, created_at DESC);
-CREATE INDEX captures_processing_idx ON captures (created_at) WHERE status = 'processing';
+CREATE INDEX captures_processing_idx ON captures (created_at)
+    WHERE status IN ('recording', 'processing');
 
 CREATE TABLE memories (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     capture_id  uuid REFERENCES captures(id) ON DELETE CASCADE,
+    kind        text NOT NULL DEFAULT 'moment'
+                CHECK (kind IN ('moment', 'session_chunk', 'session_summary')),
+    offset_s    integer CHECK (offset_s >= 0),   -- seconds from session start (for cited timestamps)
     note        text NOT NULL,
     description text,
     transcript  text,
@@ -58,6 +74,7 @@ CREATE TABLE memories (
     created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX memories_user_time_idx ON memories (user_id, occurred_at DESC);
+CREATE INDEX memories_capture_idx   ON memories (capture_id, offset_s) WHERE capture_id IS NOT NULL;
 CREATE INDEX memories_search_idx    ON memories USING gin (search);
 CREATE INDEX memories_tags_idx      ON memories USING gin (tags);
 CREATE INDEX memories_embedding_idx ON memories USING hnsw (embedding vector_cosine_ops);
@@ -78,6 +95,22 @@ CREATE TABLE media (
 );
 CREATE INDEX media_memory_idx ON media (memory_id, kind);
 CREATE INDEX media_user_idx   ON media (user_id);
+
+-- every time an object was seen: powers "where is my X, and where was it before?"
+CREATE TABLE sightings (
+    id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    memory_id  uuid NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+    frame_id   uuid REFERENCES media(id) ON DELETE SET NULL,
+    label      text NOT NULL CHECK (label = lower(label)),   -- store normalized lowercase
+    lat        double precision CHECK (lat BETWEEN -90 AND 90),
+    lng        double precision CHECK (lng BETWEEN -180 AND 180),
+    seen_at    timestamptz NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX sightings_user_label_idx ON sightings (user_id, label, seen_at DESC);
+CREATE INDEX sightings_label_trgm_idx ON sightings USING gin (label gin_trgm_ops);
+CREATE INDEX sightings_memory_idx     ON sightings (memory_id);
 
 CREATE TABLE reminders (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -104,13 +137,14 @@ CREATE TABLE daily_recaps (
     UNIQUE (user_id, day)
 );
 
--- cost and latency log: tracks credit burn and feeds the README numbers
+-- cost and latency log: tracks credit burn, feeds the README numbers and the privacy receipt
 CREATE TABLE model_calls (
     id            bigserial PRIMARY KEY,
     user_id       uuid REFERENCES users(id) ON DELETE CASCADE,
     capture_id    uuid REFERENCES captures(id) ON DELETE SET NULL,
     purpose       text NOT NULL
-                  CHECK (purpose IN ('route', 'describe', 'transcribe', 'segment', 'answer', 'recap')),
+                  CHECK (purpose IN ('route', 'describe', 'transcribe', 'segment',
+                                     'answer', 'summarize', 'recap')),
     model         text NOT NULL,
     input_tokens  integer,
     output_tokens integer,
@@ -120,3 +154,4 @@ CREATE TABLE model_calls (
     created_at    timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX model_calls_created_idx ON model_calls (created_at DESC);
+CREATE INDEX model_calls_capture_idx ON model_calls (capture_id) WHERE capture_id IS NOT NULL;

@@ -1,1 +1,0 @@
-ALTER TABLE users ALTER COLUMN assistant_name DROP DEFAULT;

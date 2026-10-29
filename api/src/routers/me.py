@@ -5,7 +5,7 @@ from psycopg.rows import dict_row
 
 from src.db import pool
 from src.deps import current_user, hash_key
-from src.schemas import DeviceIn, MeOnboard, MeOut, MePatch
+from src.schemas import DeviceIn, MeOnboard, MeOnboardOut, MeOut, MePatch
 
 router = APIRouter(tags=["me"])
 
@@ -26,7 +26,7 @@ def patch_me(body: MePatch, user=Depends(current_user)):
         ).fetchone()
 
 
-@router.post("/onboard", status_code=201)
+@router.post("/onboard", status_code=201, response_model=MeOnboardOut)
 def onboard(body: MeOnboard):
     api_key = secrets.token_urlsafe(32)
     with pool.connection() as conn:

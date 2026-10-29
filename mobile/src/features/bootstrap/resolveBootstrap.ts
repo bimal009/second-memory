@@ -5,7 +5,6 @@ type Dependencies = {
   checkRequiredPermissions: () => Promise<boolean>;
   isUnauthorized: (error: unknown) => boolean;
 };
-/** Authentication failures alone may return a saved account to onboarding. */
 export async function resolveBootstrap(deps: Dependencies): Promise<BootstrapState> {
   try {
     if (!await deps.readKey()) return "needsOnboarding";
