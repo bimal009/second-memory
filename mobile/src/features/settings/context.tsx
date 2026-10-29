@@ -26,7 +26,7 @@ const SettingsCtx = createContext<SettingsContextValue | null>(null);
 export function SettingsProvider({ children }: PropsWithChildren) {
   const [settings, setSettings] = useState<AppSettings>(() => ({
     onboardingComplete: false,
-    assistantName: "Ev",
+    assistantName: "",
     appearance: "system",
     alwaysOnIndicator: true,
     recordingPaused: false,

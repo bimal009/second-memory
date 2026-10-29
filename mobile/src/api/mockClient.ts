@@ -17,7 +17,7 @@ let recap = structuredClone(mockRecap);
 
 const defaultSettings: AppSettings = {
   onboardingComplete: false,
-  assistantName: "Ev",
+  assistantName: "",
   appearance: "system",
   alwaysOnIndicator: true,
   recordingPaused: false,

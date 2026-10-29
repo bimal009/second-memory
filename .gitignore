@@ -64,4 +64,6 @@ service-account*.json
 
 # Keep project documentation tracked
 !README.md
-!timeline.md
+
+# Local planning document
+/timeline.md

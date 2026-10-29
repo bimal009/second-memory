@@ -5,7 +5,6 @@ import {
   Mic,
   MapPin,
   Bell,
-  ChevronRight,
 } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
@@ -33,8 +32,7 @@ const PERMISSIONS: {
 
 /**
  * Name your assistant + permission rationale cards.
- * Tapping requests the real OS permission (UI-only for now: failures in
- * Expo Go/simulator are swallowed and the card still marks as enabled).
+ * All permissions must be granted before continuing.
  */
 export function OnboardingScreen({
   onDone,
@@ -52,38 +50,43 @@ export function OnboardingScreen({
     notifications: false,
   });
 
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+
   const request = async (key: PermissionKey) => {
     haptics.light();
+    setPermissionError(null);
+    let allowed = false;
     try {
       switch (key) {
         case "camera": {
           const mod = await import("expo-camera");
-          await mod.Camera.requestCameraPermissionsAsync?.();
+          allowed = (await mod.Camera.requestCameraPermissionsAsync()).granted;
           break;
         }
         case "microphone": {
           const mod = await import("expo-camera");
-          await mod.Camera.requestMicrophonePermissionsAsync?.();
+          allowed = (await mod.Camera.requestMicrophonePermissionsAsync()).granted;
           break;
         }
         case "location": {
           const loc = await import("expo-location");
-          await loc.requestForegroundPermissionsAsync();
+          allowed = (await loc.requestForegroundPermissionsAsync()).granted;
           break;
         }
         case "notifications": {
           const n = await import("expo-notifications");
-          await n.requestPermissionsAsync?.();
+          allowed = (await n.requestPermissionsAsync()).granted;
           break;
         }
       }
     } catch {
-      // Expo Go simulator restrictions — continue UI-only.
+      allowed = false;
     }
-    setGranted((g) => ({ ...g, [key]: true }));
+    setGranted((g) => ({ ...g, [key]: allowed }));
+    if (!allowed) setPermissionError(strings.onboarding.permissionRequired);
   };
 
-  const allRequested = Object.values(granted).every(Boolean);
+  const allGranted = Object.values(granted).every(Boolean);
 
   return (
     <View style={styles.container}>
@@ -104,7 +107,7 @@ export function OnboardingScreen({
           accessibilityLabel={strings.onboarding.assistantPrompt}
           value={name}
           onChangeText={setName}
-          onBlur={() => void update({ assistantName: name.trim() || "Ev" })}
+          onBlur={() => { if (name.trim()) void update({ assistantName: name.trim() }); }}
           placeholder={strings.onboarding.assistantPlaceholder}
           placeholderTextColor={colors.mutedForeground}
           maxLength={24}
@@ -129,7 +132,7 @@ export function OnboardingScreen({
                 <View style={styles.permBody}>
                   <Text variant="bodyMedium">{meta.label}</Text>
                   <Text variant="caption" color="mutedForeground">
-                    {interpolate(meta.reason, { name: name.trim() || "Ev" })}
+                    {interpolate(meta.reason, { name: name.trim() || "your assistant" })}
                   </Text>
                 </View>
                 {granted[key] ? (
@@ -150,15 +153,22 @@ export function OnboardingScreen({
       </View>
 
       <View style={styles.footer}>
-        <Button label={strings.onboarding.getStarted} size="lg" fullWidth onPress={() => { haptics.success(); onDone(); }} />
-        {!allRequested ? (
-          <Button
-            label={strings.onboarding.skip}
-            variant="ghost"
-            onPress={onDone}
-            icon={<ChevronRight size={16} color={colors.foreground} />}
-          />
+        {permissionError ? (
+          <Text variant="caption" color="mutedForeground">{permissionError}</Text>
         ) : null}
+        <Button
+          label={strings.onboarding.getStarted}
+          size="lg"
+          fullWidth
+          disabled={!name.trim() || !allGranted}
+          onPress={() => {
+            if (!name.trim() || !allGranted) return;
+            void update({ assistantName: name.trim() }).then(() => {
+              haptics.success();
+              onDone();
+            });
+          }}
+        />
       </View>
     </View>
   );

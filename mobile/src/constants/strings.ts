@@ -1,6 +1,6 @@
 /**
  * Every user-facing string lives here. `{name}` is interpolated with the
- * assistant name from settings (default "Ev").
+ * assistant name chosen by the user in settings.
  */
 export const strings = {
   appName: "Second Memory",
@@ -10,11 +10,11 @@ export const strings = {
     subtitle:
       "Record anything, any time. You decide what gets kept and what gets forgotten.",
     assistantPrompt: "What do you want to call your assistant?",
-    assistantHint: "You'll use this name to talk to it. Default is “Ev”.",
-    assistantPlaceholder: "Ev",
+    assistantHint: "Choose a name to use when talking to your assistant.",
+    assistantPlaceholder: "Enter a name",
     continue: "Continue",
     permissionsTitle: "One last thing",
-    permissionsSubtitle: "Ask for each permission only when you tap.",
+    permissionsSubtitle: "Enable all four permissions to continue. Tap each button to grant access.",
     permissions: {
       camera: { label: "Camera", reason: "See what you see, so moments can be found later by picture." },
       microphone: { label: "Microphone", reason: "Hear what you say, so {name} can follow your commands." },
@@ -23,7 +23,7 @@ export const strings = {
     },
     enable: "Enable",
     enabled: "Enabled",
-    skip: "Start without all permissions",
+    permissionRequired: "All permissions are required. If a permission was denied, enable it in your phone settings, then tap Enable again.",
     getStarted: "Get started",
   },
 

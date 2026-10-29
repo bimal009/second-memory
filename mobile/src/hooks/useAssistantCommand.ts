@@ -16,7 +16,7 @@ type CommandOutcome = {
 /**
  * ROUND-TRIP for a recognized voice command on the Capture screen.
  *
- * TODO(backend): the recognition itself (always-listening "Ev, …" wake word,
+ * TODO(backend): the recognition itself (always-listening "{name}, …" wake word,
  * real transcription) is a native/AI problem — this hook takes already-
  * transcribed text and hands it to the API layer. Swap `api` for the
  * FastAPI-backed client and nothing here changes.

@@ -20,7 +20,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 import { useHaptics } from "@/hooks/useHaptics";
 
 export type HoldToTalkButtonProps = {
-  /** Interpolated label, e.g. "Hold to talk to Ev". */
+  /** Interpolated label, e.g. "Hold to talk to {name}". */
   label: string;
   /** Reading "hold to talk" → active while held. */
   active: boolean;
