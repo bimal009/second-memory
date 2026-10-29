@@ -1,0 +1,67 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated media and temporary files
+api/storage/*
+!api/storage/.gitkeep
+tmp/
+temp/
+*.tmp
+
+# Logs
+*.log
+logs/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node.js / Expo
+node_modules/
+.expo/
+.expo-shared/
+web-build/
+dist/
+
+# Local environment and credentials
+secrets/
+credentials.json
+service-account*.json
+
+# Keep project documentation tracked
+!README.md
+!timeline.md
