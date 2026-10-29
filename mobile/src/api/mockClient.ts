@@ -5,7 +5,7 @@ import type {
   Memory,
   Point,
 } from "@/types";
-import type { SecondMemoryClient } from "@/api/client";
+import type { SecondMemoryClient } from "@/api/domainClient";
 import { exampleQuestions, mockMemories, mockRecap, mockReminders } from "@/mocks/data";
 
 const MOCK_LATENCY_MS = 450;
@@ -16,7 +16,6 @@ let reminders = structuredClone(mockReminders);
 let recap = structuredClone(mockRecap);
 
 const defaultSettings: AppSettings = {
-  onboardingComplete: false,
   assistantName: "",
   appearance: "system",
   alwaysOnIndicator: true,

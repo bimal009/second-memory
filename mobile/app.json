@@ -25,18 +25,26 @@
     },
     "plugins": [
       "expo-router",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "default"
+        }
+      ],
       [
         "expo-camera",
         {
           "cameraPermission": "Second Memory uses the camera to see what you see, so moments can be found later by picture.",
-          "microphonePermission": "Second Memory uses the microphone to hear your voice commands and questions."
+          "microphonePermission": "Second Memory uses the microphone to hear your voice commands and questions.",
+          "recordAudioAndroid": true
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Second Memory tags memories with where they happened — location stays on your phone."
+          "locationWhenInUsePermission": "Second Memory tags memories with where they happened — location stays on your phone.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
         }
       ],
       [
@@ -45,6 +53,12 @@
           "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
         }
       ]
     ],
