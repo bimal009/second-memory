@@ -21,7 +21,7 @@ import { strings } from "@/constants/strings";
 import { formatClock } from "@/features/capture/CaptureSessionProvider";
 
 export type CaptureScreenProps = {
-  status: "recording" | "paused";
+  status: "idle" | "recording" | "paused";
   elapsedSec: number;
   bufferMinutes: number;
   assistantName: string;
@@ -43,7 +43,7 @@ const MOCK_HINT = "“…keep the toolbox”";
 
 /** Full-bleed capture experience — dark is the hero look for Capture. */
 export function CaptureScreen({
-  status,
+  status = "idle",
   elapsedSec,
   bufferMinutes,
   assistantName,
@@ -76,7 +76,7 @@ export function CaptureScreen({
   const savedStyle = useAnimatedStyle(() => ({ opacity: savedOpacity.value }));
 
   return (
-    <View style={[styles.fill, { backgroundColor: "#0A0A0A" }]}>
+    <View style={[styles.fill, styles.transparent]}>
       {/* Top: pulsing recording pill + buffer meter */}
       <View style={[styles.top, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.pillRow}>
@@ -160,8 +160,8 @@ export function CaptureScreen({
           }}
         />
 
-        <Text variant="micro" style={styles.mockHint} >
-          {strings.capture.liveCaptionPlaceholder}
+        <Text variant="micro" style={styles.mockHint}>
+          {MOCK_HINT}
         </Text>
       </View>
 
@@ -190,6 +190,7 @@ const sessionRowStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  transparent: { backgroundColor: "transparent" },
   top: {
     top: 0,
     gap: spacing.md,

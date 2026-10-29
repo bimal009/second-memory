@@ -30,8 +30,6 @@ export function AskResultView({
   onRetry,
   onReset,
 }: AskResultViewProps) {
-  const { colors } = useTheme();
-
   if (phase === "thinking") {
     return (
       <Card padding="lg">

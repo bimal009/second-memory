@@ -4,7 +4,7 @@ import React, {
   useMemo,
   type PropsWithChildren,
 } from "react";
-import { useColorScheme, StyleSheet } from "react-native";
+import { useColorScheme, type TextStyle } from "react-native";
 import { darkColors, lightColors, type ThemeColors } from "@/theme/tokens";
 import { useSettingsContext } from "@/features/settings/context";
 import type { AppearanceMode } from "@/types";
@@ -40,12 +40,4 @@ export function useTheme(): ThemeContextValue {
     throw new Error("useTheme must be used inside <ThemeProvider>");
   }
   return ctx;
-}
-
-/** Convenience helper for themed StyleSheet factories. */
-export function themed<T extends StyleSheet.NamedStyles<T>>(
-  factory: (colors: ThemeColors) => T,
-  colors: ThemeColors,
-): T {
-  return StyleSheet.create(factory(colors));
 }

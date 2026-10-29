@@ -40,7 +40,7 @@ export function CitedAnswerCard({ answer, location }: CitedAnswerCardProps) {
           <GradientFrame seed={answer.frameSeed} aspect={4 / 3} corners={radius.base} />
         </View>
         {highlightOn ? (
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <View style={ABS_FILL} pointerEvents="none">
             <HighlightPolygon
               mask={answer.highlightMask}
               aspect={4 / 3}
@@ -97,6 +97,14 @@ function TogglePressable({
   );
 }
 
+const ABS_FILL = {
+  position: "absolute" as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+} as const;
+
 const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
@@ -108,9 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.base,
     overflow: "hidden",
   },
-  frame: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  frame: ABS_FILL,
   metaRow: {
     flexDirection: "row",
     alignItems: "center",

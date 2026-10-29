@@ -18,6 +18,7 @@ let reminders = structuredClone(mockReminders);
 let recap = structuredClone(mockRecap);
 
 const defaultSettings: AppSettings = {
+  onboardingComplete: false,
   assistantName: "Ev",
   appearance: "system",
   alwaysOnIndicator: true,
@@ -117,14 +118,11 @@ function mockAsk(question: string): AskResult {
     };
   } else {
     // No memory of that — surface baseline suggestions.
-  return {
-    kind: "not-found",
-    suggestions: [
-      exampleQuestions[0],
-      exampleQuestions[1],
-      exampleQuestions[2],
-    ],
-  };
+    return {
+      kind: "not-found",
+      suggestions: [exampleQuestions[0], exampleQuestions[1], exampleQuestions[2]],
+    };
+  }
 }
 
 /** Mock voice-command parser → capture plan + freshly saved memory. */
@@ -194,7 +192,7 @@ export const mockClient: SecondMemoryClient = {
 
   async ask(question) {
     await delay(MOCK_LATENCY_MS + 250);
-    return mockAsk(question, settings.assistantName);
+    return mockAsk(question);
   },
 
   async getToday() {

@@ -1,64 +1,46 @@
-import React, { forwardRef } from "react";
-import { Text as RNText, StyleSheet, type TextProps as RNTextProps } from "react-native";
+import React from "react";
+import { Text as RNText, type TextProps as RNTextProps } from "react-native";
 import { textStyles } from "@/theme/typography";
 import { useTheme } from "@/theme/ThemeProvider";
-import type { ThemeColors } from "@/theme/tokens";
 
 export type TextVariant = keyof typeof textStyles;
 
 export type AppTextProps = RNTextProps & {
   variant?: TextVariant;
-  color?: keyof ThemeColors | string;
-  weight?: "regular" | "medium" | "semiBold" | "bold" | "extraBold";
+  /** Token key ("mutedForeground") or literal hex. */
+  color?: string;
   align?: "left" | "center" | "right";
   /** Dynamic Type support; keeps layout stable by scaling max +40%. */
   maxFontSizeMultiplier?: number;
 };
 
-export const Text = forwardRef<RNText, AppTextProps>(function AppText(
-  {
-    variant = "body",
-    color,
-    weight,
-    align,
-    maxFontSizeMultiplier = 1.4,
-    style,
-    ...rest
-  },
-  ref,
-) {
+export function Text({
+  variant = "body",
+  color,
+  align,
+  maxFontSizeMultiplier = 1.4,
+  style,
+  ...rest
+}: AppTextProps) {
   const { colors } = useTheme();
 
-  const fontSizeKey = variant;
   const colorValue =
-    typeof color === "string" && color.startsWith("#")
+    color && color.startsWith("#")
       ? color
       : color
-        ? (colors as Record<string, string>)[color]
-        : undefined;
+        ? (colors as unknown as Record<string, string>)[color]
+        : colors.foreground;
 
   return (
     <RNText
-      ref={ref}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       style={[
-        textStyles[fontSizeKey],
-        colorValue ? { color: colorValue } : { color: colors.foreground },
-        weight
-          ? {
-              fontFamily: {
-                regular: textStyles.body.fontFamily,
-                medium: textStyles.bodyMedium.fontFamily,
-                semiBold: textStyles.heading.fontFamily,
-                bold: textStyles.title.fontFamily,
-                extraBold: textStyles.display.fontFamily,
-              }[weight],
-            }
-          : null,
+        textStyles[variant],
+        { color: colorValue },
         align ? { textAlign: align } : null,
         style,
       ]}
       {...rest}
     />
   );
-});
+}

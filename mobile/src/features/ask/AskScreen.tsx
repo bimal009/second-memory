@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { Send, Search } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
@@ -23,7 +23,6 @@ export function AskScreen() {
   const name = settings.assistantName;
   const { phase, question, result, location, suggestions, ask, reset } = useAsk();
   const [draft, setDraft] = useState("");
-  const inputRef = useRef<TextInput | null>(null);
 
   const submitText = () => {
     const q = draft.trim() || question;
@@ -43,31 +42,33 @@ export function AskScreen() {
       </View>
 
       {/* Result area */}
-      {phase !== "idle" ? (
-        <View style={styles.result}>
-          <AskResultView
-            phase={phase}
-            result={result}
-            location={location}
-            suggestions={suggestions}
-            assistantName={name}
-            onRetry={(q) => (q ? ask(q) : ask(question))}
-            onReset={reset}
-          />
-        </View>
-      ) : null}
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {phase !== "idle" ? (
+          <View style={styles.result}>
+            <AskResultView
+              phase={phase}
+              result={result}
+              location={location}
+              suggestions={suggestions}
+              assistantName={name}
+              onRetry={(q) => (q ? ask(q) : ask(question))}
+              onReset={reset}
+            />
+          </View>
+        ) : null}
 
-      {/* Example questions */}
-      <View style={styles.examples}>
-        <Text variant="micro" color="mutedForeground">
-          {strings.ask.examplesTitle}
-        </Text>
-        <View style={styles.exampleRow}>
-          {suggestions.map((s) => (
-            <Chip key={s} label={s} onPress={() => ask(s)} />
-          ))}
+        {/* Example questions */}
+        <View style={styles.examples}>
+          <Text variant="micro" color="mutedForeground">
+            {strings.ask.examplesTitle}
+          </Text>
+          <View style={styles.exampleRow}>
+            {suggestions.map((s) => (
+              <Chip key={s} label={s} onPress={() => ask(s)} />
+            ))}
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Bottom: hold to ask + typed fallback */}
       <View style={styles.bottom}>
@@ -81,7 +82,6 @@ export function AskScreen() {
         <View style={[styles.fallbackRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Search size={18} color={colors.mutedForeground} style={styles.searchIcon} />
           <TextInput
-            ref={inputRef}
             style={styles.input}
             placeholder={interpolate(strings.ask.placeholder, { name })}
             placeholderTextColor={colors.mutedForeground}
@@ -116,13 +116,15 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingTop: spacing.md,
   },
-  result: {
+  result: {},
+  scroll: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
   },
   examples: {
-    paddingHorizontal: spacing.lg,
     gap: spacing.sm,
     marginTop: spacing.lg,
   },

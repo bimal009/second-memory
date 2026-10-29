@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Eye, EyeOff, Trash2 } from "lucide-react-native";
+import { router } from "expo-router";
+import { ChevronLeft, Eye, EyeOff, Trash2 } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { Badge } from "@/components/ui/Badge";
@@ -61,6 +62,13 @@ export function MemoryDetail({ id, onDelete }: MemoryDetailProps) {
 
   return (
     <ScreenContainer scroll padBottom={24}>
+      <View style={styles.backRow}>
+        <IconButton
+          accessibilityLabel={strings.common.back}
+          onPress={() => router.back()}
+          icon={<ChevronLeft size={20} color={colors.foreground} />}
+        />
+      </View>
       {/* Large frame with highlight toggle */}
       <View style={styles.frameWrap}>
         <GradientFrame seed={memory.frameSeed} aspect={4 / 3} corners={radius.base} />
@@ -152,6 +160,10 @@ export function MemoryDetail({ id, onDelete }: MemoryDetailProps) {
 }
 
 const styles = StyleSheet.create({
+  backRow: {
+    marginHorizontal: -spacing.lg,
+    marginBottom: spacing.sm,
+  },
   skeletonWrap: {
     paddingHorizontal: spacing.lg,
     gap: spacing.md,

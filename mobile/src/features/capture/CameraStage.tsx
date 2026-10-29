@@ -5,7 +5,6 @@ import { isDevice } from "expo-device";
 import { CameraIcon, CameraOff } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
-import { radius } from "@/theme/tokens";
 import { spacing } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 import { strings } from "@/constants/strings";
@@ -68,9 +67,19 @@ export function CameraStage() {
   );
 }
 
+// StyleSheet.absoluteFillObject was removed in RN 0.88 — use this shape.
+const absoluteFillStyle = {
+  position: "absolute" as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+};
+
 const styles = StyleSheet.create({
   placeholder: {
-    ...StyleSheet.absoluteFillObject,
+    ...absoluteFillStyle,
+    borderCurve: "continuous",
     borderRadius: 0,
     borderWidth: 1,
     alignItems: "center",

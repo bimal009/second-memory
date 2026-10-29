@@ -6,7 +6,30 @@
  * `useTheme().colors` or these raw token tables.
  */
 
-export const lightColors = {
+/** Low-churn shape both palettes conform to. */
+export type ThemeColors = {
+  background: string;
+  foreground: string;
+  card: string;
+  cardForeground: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  muted: string;
+  mutedForeground: string;
+  accent: string;
+  accentForeground: string;
+  destructive: string;
+  destructiveForeground: string;
+  border: string;
+  input: string;
+  ring: string;
+  overlay: string;
+  isDark: boolean;
+};
+
+export const lightColors: ThemeColors = {
   background: "#FFFFFF",
   foreground: "#0A0A0A",
   card: "#FFFFFF",
@@ -25,7 +48,8 @@ export const lightColors = {
   input: "#E5E5E5",
   ring: "#A3A3A3",
   overlay: "rgba(10, 10, 10, 0.45)",
-} as const;
+  isDark: false,
+} as const satisfies ThemeColors;
 
 export const darkColors = {
   background: "#0A0A0A",
@@ -46,9 +70,8 @@ export const darkColors = {
   input: "rgba(255, 255, 255, 0.15)",
   ring: "#737373",
   overlay: "rgba(0, 0, 0, 0.55)",
-} as const;
-
-export type ThemeColors = typeof darkColors;
+  isDark: true,
+} as const satisfies ThemeColors;
 
 /**
  * Deep lime used wherever lime would sit on a light surface as text/icon

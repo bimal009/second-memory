@@ -27,6 +27,14 @@ export type BottomSheetProps = {
   children: React.ReactNode;
 };
 
+const ABS_FILL = {
+  position: "absolute" as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+} as const;
+
 export function BottomSheet({
   visible,
   onClose,
@@ -103,10 +111,8 @@ export function BottomSheet({
   );
 }
 
-type SV = SharedValue<number>;
-
 const styles = StyleSheet.create({
-  fill: { ...StyleSheet.absoluteFillObject },
+  fill: { ...ABS_FILL },
   scrimBg: { backgroundColor: "#000000" },
   sheet: {
     borderTopLeftRadius: radius.lg,

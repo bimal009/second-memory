@@ -98,6 +98,7 @@ export type ConnectedSource = {
 };
 
 export type AppSettings = {
+  onboardingComplete: boolean;
   assistantName: string;
   appearance: AppearanceMode;
   alwaysOnIndicator: boolean;

@@ -1,15 +1,18 @@
 import React, { type PropsWithChildren } from "react";
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView } from "react-native";
+import { StyleSheet, View, ScrollView, KeyboardAvoidingView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/theme/ThemeProvider";
+import { spacing } from "@/theme/spacing";
 
 export type ScreenContainerProps = {
   /** Content scrolls (with content insets) or flows top-down. */
   scroll?: boolean;
   /** Treat screen as dark-media (camera hero) — bypasses background bg for look. */
   transparent?: boolean;
-  /** Extra bottom padding, e.g. for floating CTAs. */
+  /** Fixed bottom padding above the tab bar/home indicator. */
   padBottom?: number;
+  /** Horizontal inset override. */
+  noHorizontalPadding?: boolean;
 };
 
 export function ScreenContainer({
@@ -17,6 +20,7 @@ export function ScreenContainer({
   scroll = false,
   transparent = false,
   padBottom,
+  noHorizontalPadding = false,
 }: PropsWithChildren<ScreenContainerProps>) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -27,21 +31,23 @@ export function ScreenContainer({
       style={styles.flex}
       contentContainerStyle={[
         styles.content,
-        padBottom ? { paddingBottom: insets.bottom + padBottom } : { paddingBottom: insets.bottom + spacing.xxl },
+        !noHorizontalPadding && styles.contentPad,
+        {
+          paddingBottom: insets.bottom + (padBottom ? padBottom + 16 : spacing.xxl),
+        },
       ]}
-      contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={styles.flex}>{children}</View>
+    <View style={[styles.flex, !noHorizontalPadding && styles.contentPad]}>{children}</View>
   );
 
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-      <View style={[styles.flex, styles.pad, { backgroundColor: bg, paddingTop: insets.top }]}>
+      <View style={[styles.flex, { backgroundColor: bg, paddingTop: insets.top }]}>
         {body}
       </View>
     </KeyboardAvoidingView>
@@ -50,15 +56,10 @@ export function ScreenContainer({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  pad: {
-    paddingHorizontal: spacingLgSafe(),
+  contentPad: {
+    paddingHorizontal: spacing.lg,
   },
   content: {
     paddingBottom: 0,
   },
 });
-
-/** Horizontal safe area (notch / rounded corners in landscape). */
-function spacingLgSafe() {
-  return 16;
-}
