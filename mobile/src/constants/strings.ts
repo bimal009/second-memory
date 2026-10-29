@@ -71,6 +71,7 @@ export const strings = {
     listening: "Listening…",
     thinking: "Thinking…",
     answerTitle: "{name} remembers",
+    answerBadge: "Answer",
     noMemoryTitle: "No memory of that",
     noMemoryBody: "{name} doesn't have a memory matching that. Try one of these, or capture it next time.",
     suggestionsTitle: "Suggestions",
