@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { TodayPayload } from "@/types";
 import { api } from "@/api";
-import { strings } from "@/constants/strings";
 
 /** Today tab data with loading + error state. */
 export function useToday() {
@@ -10,6 +9,7 @@ export function useToday() {
   const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
+    // Event-handler-driven reload: allowed to set state synchronously.
     setLoading(true);
     setError(false);
     try {
@@ -21,9 +21,24 @@ export function useToday() {
     }
   }, []);
 
+  // Initial load — setState only after the awaited fetch.
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    const loadInitial = async () => {
+      try {
+        const payload = await api.getToday();
+        if (!cancelled) setData(payload);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void loadInitial();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const toggleReminder = useCallback(async (id: string, done: boolean) => {
     // Optimistic toggle; API is the seam to persist.

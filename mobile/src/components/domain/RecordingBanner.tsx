@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Lock } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import { RecordingPill } from "@/components/domain/RecordingPill";
@@ -7,7 +7,6 @@ import { radius } from "@/theme/tokens";
 import { spacing, touchTarget } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 import { strings } from "@/constants/strings";
-import { Pressable } from "react-native";
 
 export type RecordingBannerProps = {
   visible: boolean;

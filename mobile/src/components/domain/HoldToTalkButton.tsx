@@ -52,9 +52,8 @@ export function HoldToTalkButton({
   const [size, setSize] = useState(96);
   const ring = useSharedValue(0);
   const pressed = useSharedValue(0);
-  const holdActive = useRef(active);
-
-  holdActive.current = active;
+  /** Set in press handlers only — never read/written during render. */
+  const holdStarted = useRef(false);
 
   useEffect(() => {
     if (active && !reduced && !paused) {
@@ -85,11 +84,14 @@ export function HoldToTalkButton({
 
   const handleIn = () => {
     if (disabled || paused) return;
+    holdStarted.current = true;
     haptics.medium();
     onHoldStart?.();
   };
   const handleOut = () => {
-    if (disabled || paused || !holdActive.current) return;
+    if (!holdStarted.current) return;
+    holdStarted.current = false;
+    if (disabled || paused) return;
     haptics.light();
     onHoldEnd?.();
   };

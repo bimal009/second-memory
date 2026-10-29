@@ -4,7 +4,7 @@ import React, {
   useMemo,
   type PropsWithChildren,
 } from "react";
-import { useColorScheme, type TextStyle } from "react-native";
+import { useColorScheme } from "react-native";
 import { darkColors, lightColors, type ThemeColors } from "@/theme/tokens";
 import { useSettingsContext } from "@/features/settings/context";
 import type { AppearanceMode } from "@/types";

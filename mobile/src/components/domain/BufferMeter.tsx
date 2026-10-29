@@ -1,7 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "@/components/ui/Text";
-import { radius } from "@/theme/tokens";
 import { spacing } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 import { strings } from "@/constants/strings";

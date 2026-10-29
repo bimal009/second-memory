@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { StyleSheet, type StyleProp, type ViewStyle } from "react-native";
+import { type StyleProp, type ViewStyle } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
   useReducedMotion,
 } from "react-native-reanimated";
-import { radius, motion } from "@/theme/tokens";
+import { radius } from "@/theme/tokens";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export type SkeletonProps = {

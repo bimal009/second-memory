@@ -17,6 +17,7 @@ export function useMemories() {
   const [error, setError] = useState(false);
 
   const refresh = useCallback(async () => {
+    // Event-handler-driven reload: allowed to set state synchronously.
     setLoading(true);
     setError(false);
     try {
@@ -30,9 +31,28 @@ export function useMemories() {
     }
   }, [filter, query]);
 
+  // Load whenever filter/query change. All setState happens after the
+  // awaited fetch, never synchronously in the effect body.
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const list = await api.listMemories({ query, filter });
+        if (cancelled) return;
+        setMemories(list);
+        setGroups(groupByDay(list));
+        setError(false);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [filter, query]);
 
   const remove = useCallback(async (id: string) => {
     await api.deleteMemory(id);

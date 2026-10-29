@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Pressable,
   StyleSheet,
@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { spacing, touchTarget, iconSize } from "@/theme/spacing";
-import { radius, motion } from "@/theme/tokens";
+import { radius } from "@/theme/tokens";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export type IconButtonProps = {
@@ -32,7 +32,6 @@ export function IconButton({
   style,
 }: IconButtonProps) {
   const { colors } = useTheme();
-  const [pressed, setPressed] = useState(false);
 
   const bg = selected ? colors.primary : "transparent";
 
@@ -42,11 +41,9 @@ export function IconButton({
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled, selected: !!selected }}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
       disabled={disabled}
       hitSlop={{ top: spacing.sm, bottom: spacing.sm, left: spacing.sm, right: spacing.sm }}
-      style={({}) => [
+      style={({ pressed }: { pressed: boolean }) => [
         styles.base,
         tight && styles.tight,
         { backgroundColor: bg },

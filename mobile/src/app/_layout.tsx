@@ -2,8 +2,8 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useFonts } from "@expo-google-fonts/inter";
 import {
+  useFonts,
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
@@ -12,10 +12,13 @@ import {
 } from "@expo-google-fonts/inter";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { SettingsProvider } from "@/features/settings/context";
-import { ThemeProvider, useTheme } from "@/theme/ThemeProvider";
-import { CaptureSessionProvider, useCaptureSession } from "@/features/capture/CaptureSessionProvider";
+import { ThemeProvider } from "@/theme/ThemeProvider";
+import {
+  CaptureSessionProvider,
+  useCaptureSession,
+  formatClock,
+} from "@/features/capture/CaptureSessionProvider";
 import { RecordingBanner } from "@/components/domain/RecordingBanner";
-import { formatClock } from "@/features/capture/CaptureSessionProvider";
 
 /** Providers + fonts + the global RecordingBanner that lives above every screen. */
 export default function RootLayout() {
@@ -55,7 +58,6 @@ export default function RootLayout() {
 function RecordingBannerHost() {
   const { status, elapsedSec, pause, resume } = useCaptureSession();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
 
   if (status === "idle") return null;
 

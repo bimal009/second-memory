@@ -3,9 +3,7 @@ import type {
   AskResult,
   CapturePlan,
   Memory,
-  MemoryFilterKey,
   Point,
-  TodayPayload,
 } from "@/types";
 import type { SecondMemoryClient } from "@/api/client";
 import { exampleQuestions, mockMemories, mockRecap, mockReminders } from "@/mocks/data";
