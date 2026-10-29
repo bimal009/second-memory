@@ -39,7 +39,7 @@ export const lightColors: ThemeColors = {
   secondary: "#F4F4F5",
   secondaryForeground: "#18181B",
   muted: "#F5F5F5",
-  mutedForeground: "#737373",
+  mutedForeground: "#6B6B6B",
   accent: "#F5F5F5",
   accentForeground: "#18181B",
   destructive: "#DC2626",

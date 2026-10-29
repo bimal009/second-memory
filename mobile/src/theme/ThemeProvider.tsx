@@ -6,7 +6,7 @@ import React, {
 } from "react";
 import { useColorScheme } from "react-native";
 import { darkColors, lightColors, type ThemeColors } from "@/theme/tokens";
-import { useSettingsContext } from "@/features/settings/context";
+import { usePreferences } from "@/lib/preferences";
 import type { AppearanceMode } from "@/types";
 
 type ThemeContextValue = {
@@ -18,7 +18,7 @@ type ThemeContextValue = {
 const ThemeCtx = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const { settings } = useSettingsContext();
+  const { settings } = usePreferences();
   const system = useColorScheme();
   const isDark =
     settings.appearance === "system"

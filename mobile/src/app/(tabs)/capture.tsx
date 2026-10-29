@@ -4,7 +4,7 @@ import { CameraStage } from "@/features/capture/CameraStage";
 import { CaptureScreen } from "@/features/capture/CaptureScreen";
 import { useCaptureSession } from "@/features/capture/CaptureSessionProvider";
 import { useAssistantCommand } from "@/hooks/useAssistantCommand";
-import { useSettingsContext } from "@/features/settings/context";
+import { usePreferences } from "@/lib/preferences";
 import { mediaColors } from "@/theme/tokens";
 import type { CapturePlan } from "@/types";
 
@@ -14,7 +14,7 @@ import type { CapturePlan } from "@/types";
  */
 export default function CaptureTab() {
   const { status, elapsedSec, start, pause, resume, stop } = useCaptureSession();
-  const { settings } = useSettingsContext();
+  const { settings } = usePreferences();
   const [planOverride, setPlanOverride] = useState<CapturePlan | null>(null);
   const { phase, transcript, plan, submitCommand } = useAssistantCommand();
 

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { interpolate } from "@/components/domain/BufferMeter";
-import { useSettingsContext } from "@/features/settings/context";
+import { usePreferences } from "@/lib/preferences";
 import { useHaptics } from "@/hooks/useHaptics";
 import { api } from "@/api";
 import type { AppearanceMode, BufferMinutes } from "@/types";
@@ -30,7 +30,7 @@ const APPEARANCE: { mode: AppearanceMode; label: string }[] = [
 const BUFFERS: BufferMinutes[] = [1, 2, 5];
 
 export function SettingsView({ onDeletedAll }: SettingsViewProps) {
-  const { settings, update } = useSettingsContext();
+  const { settings, update } = usePreferences();
   const { colors } = useTheme();
   const haptics = useHaptics();
   const [confirmOpen, setConfirmOpen] = useState(false);

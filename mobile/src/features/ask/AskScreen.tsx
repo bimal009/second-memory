@@ -9,7 +9,7 @@ import { useAsk } from "@/features/ask/useAsk";
 import { spacing } from "@/theme/spacing";
 import { strings } from "@/constants/strings";
 import { interpolate } from "@/components/domain/BufferMeter";
-import { useSettingsContext } from "@/features/settings/context";
+import { usePreferences } from "@/lib/preferences";
 import { useTheme } from "@/theme/ThemeProvider";
 
 const MOCK_TRANSCRIPT = "Where is my passport?";
@@ -18,7 +18,7 @@ const MOCK_TRANSCRIPT = "Where is my passport?";
  * Voice-first Q&A: hold to ask, typed fallback, cited answer rendering.
  */
 export function AskScreen() {
-  const { settings } = useSettingsContext();
+  const { settings } = usePreferences();
   const { colors } = useTheme();
   const name = settings.assistantName;
   const { phase, question, result, location, suggestions, ask, reset } = useAsk();

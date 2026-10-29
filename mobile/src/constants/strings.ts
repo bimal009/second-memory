@@ -7,13 +7,20 @@ export const strings = {
 
   onboarding: {
     title: "Meet your memory",
+    nameStep: "01 / MAKE IT YOURS",
+    permissionsPageTitle: "Give your memory its senses",
+    openSettings: "Open phone settings",
+    permissionsStep: "02 / CONNECT YOUR SENSES",
+    setupHint: "Choose a name and enable all four permissions to begin.",
+    ready: "All set. Your next memory starts here.",
+    saveError: "Could not save your assistant name. Please try again.",
     subtitle:
       "Record anything, any time. You decide what gets kept and what gets forgotten.",
     assistantPrompt: "What do you want to call your assistant?",
     assistantHint: "Choose a name to use when talking to your assistant.",
     assistantPlaceholder: "Enter a name",
     continue: "Continue",
-    permissionsTitle: "One last thing",
+    permissionsTitle: "A little access. A lot of recall.",
     permissionsSubtitle: "Enable all four permissions to continue. Tap each button to grant access.",
     permissions: {
       camera: { label: "Camera", reason: "See what you see, so moments can be found later by picture." },

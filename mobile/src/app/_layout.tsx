@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -11,7 +12,7 @@ import {
   Inter_800ExtraBold,
 } from "@expo-google-fonts/inter";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { SettingsProvider } from "@/features/settings/context";
+import { BootstrapGuard } from "@/features/bootstrap/BootstrapGuard";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 import {
   CaptureSessionProvider,
@@ -21,8 +22,8 @@ import {
 import { RecordingBanner } from "@/components/domain/RecordingBanner";
 import { mediaColors } from "@/theme/tokens";
 
-/** Providers + fonts + the global RecordingBanner that lives above every screen. */
 export default function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient());
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -36,23 +37,26 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <CaptureSessionProvider>
-        <SettingsProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <CaptureSessionProvider>
           <ThemeProvider>
             <StatusBar style="auto" />
-            <View style={styles.root}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="memory/[id]" />
-              </Stack>
-              <RecordingBannerHost />
-            </View>
+            <BootstrapGuard>
+              <View style={styles.root}>
+                <Stack screenOptions={{ headerShown: false, animation: "none" }}>
+                  <Stack.Screen name="onboarding" />
+                  <Stack.Screen name="permissions" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="memory/[id]" />
+                </Stack>
+                <RecordingBannerHost />
+              </View>
+            </BootstrapGuard>
           </ThemeProvider>
-        </SettingsProvider>
-      </CaptureSessionProvider>
-    </SafeAreaProvider>
+        </CaptureSessionProvider>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }
 

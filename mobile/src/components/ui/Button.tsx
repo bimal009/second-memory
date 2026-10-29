@@ -1,4 +1,5 @@
 import React from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "@/components/ui/Text";
 import { limeDeep, mediaColors, radius } from "@/theme/tokens";
@@ -54,6 +55,7 @@ export function Button({
   style,
 }: ButtonProps) {
   const { colors } = useTheme();
+  const reducedMotion = useReducedMotion();
   const scheme = resolveColors(colors, variant);
 
   return (
@@ -77,7 +79,7 @@ export function Button({
         (disabled || loading) && styles.disabled,
       ]}
     >
-      {loading ? (
+      {loading && !reducedMotion ? (
         <ActivityIndicator color={scheme.fg} />
       ) : (
         <View style={styles.row}>

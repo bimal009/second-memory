@@ -4,13 +4,13 @@ import { Text } from "@/components/ui/Text";
 import { ScreenContainer } from "@/components/ui/ScreenContainer";
 import { MemoriesList } from "@/features/memories/MemoriesList";
 import { useMemories } from "@/features/memories/useMemories";
-import { useSettingsContext } from "@/features/settings/context";
+import { usePreferences } from "@/lib/preferences";
 import { strings } from "@/constants/strings";
 import { spacing } from "@/theme/spacing";
 
 export default function MemoriesTab() {
   const memories = useMemories();
-  const { settings } = useSettingsContext();
+  const { settings } = usePreferences();
 
   return (
     <ScreenContainer scroll padBottom={16}>
