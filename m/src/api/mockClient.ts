@@ -3,19 +3,19 @@ import type {
   AskResult,
   CapturePlan,
   Memory,
-  Point,
 } from "@/types";
 import type { SecondMemoryClient } from "@/api/domainClient";
 import { exampleQuestions, mockMemories, mockRecap, mockReminders, mockSessions, mockReceipts } from "@/mocks/data";
 import { getPreviewState, mockDelay } from "./previewState";
 import { updatePreferences, getPreferences } from "@/lib/preferences";
+import { uiCopy as c } from "@/constants/strings";
 
 const MOCK_LATENCY_MS = 450;
 const delay = (_ms: number) => mockDelay();
 
 let memories: Memory[] = structuredClone(mockMemories);
 let reminders = structuredClone(mockReminders);
-let recap = structuredClone(mockRecap);
+let recap: import("@/types").DayRecap | null = structuredClone(mockRecap);
 let sessions = structuredClone(mockSessions);
 
 const defaultSettings: AppSettings = {
@@ -48,7 +48,8 @@ function mockAsk(question: string): AskResult {
   const q = question.toLowerCase();
 
   if (q.includes("passport") || q.includes("blue drawer")) {
-    const m = memories.find((x) => x.id === "memory-passport-drawer")!;
+    const m = memories.find((x) => x.id === "memory-passport-drawer");
+    if (!m) return { kind: "not-found", suggestions: [...exampleQuestions] };
     return {
       kind: "answer",
       answer: {
@@ -57,12 +58,13 @@ function mockAsk(question: string): AskResult {
         citedMemoryId: m.id,
         timeLabel: m.startedAtLabel,
         frameSeed: m.frameSeed,
-        highlightMask: (m.highlight!.mask as Point[]).map((p) => ({ ...p })),
+        highlightMask: m.highlight?.mask.map(p => ({ ...p })) ?? [],
       },
     };
   }
   if (q.includes("car") || q.includes("parked")) {
-    const m = memories.find((x) => x.id === "memory-car-level3")!;
+    const m = memories.find((x) => x.id === "memory-car-level3");
+    if (!m) return { kind: "not-found", suggestions: [...exampleQuestions] };
     return {
       kind: "answer",
       answer: {
@@ -71,12 +73,13 @@ function mockAsk(question: string): AskResult {
         citedMemoryId: m.id,
         timeLabel: m.startedAtLabel,
         frameSeed: m.frameSeed,
-        highlightMask: (m.highlight!.mask as Point[]).map((p) => ({ ...p })),
+        highlightMask: m.highlight?.mask.map(p => ({ ...p })) ?? [],
       },
     };
   }
   if (q.includes("toolbox") || q.includes("screwdriver")) {
-    const m = memories.find((x) => x.id === "memory-toolbox")!;
+    const m = memories.find((x) => x.id === "memory-toolbox");
+    if (!m) return { kind: "not-found", suggestions: [...exampleQuestions] };
     return {
       kind: "answer",
       answer: {
@@ -85,12 +88,13 @@ function mockAsk(question: string): AskResult {
         citedMemoryId: m.id,
         timeLabel: m.startedAtLabel,
         frameSeed: m.frameSeed,
-        highlightMask: (m.highlight!.mask as Point[]).map((p) => ({ ...p })),
+        highlightMask: m.highlight?.mask.map(p => ({ ...p })) ?? [],
       },
     };
   }
   if (q.includes("keys")) {
-    const m = memories.find((x) => x.id === "memory-keys-shelf")!;
+    const m = memories.find((x) => x.id === "memory-keys-shelf");
+    if (!m) return { kind: "not-found", suggestions: [...exampleQuestions] };
     return {
       kind: "answer",
       answer: {
@@ -99,12 +103,13 @@ function mockAsk(question: string): AskResult {
         citedMemoryId: m.id,
         timeLabel: m.startedAtLabel,
         frameSeed: m.frameSeed,
-        highlightMask: (m.highlight!.mask as Point[]).map((p) => ({ ...p })),
+        highlightMask: m.highlight?.mask.map(p => ({ ...p })) ?? [],
       },
     };
   }
   if (q.includes("library") || q.includes("book")) {
-    const m = memories.find((x) => x.id === "memory-library-book")!;
+    const m = memories.find((x) => x.id === "memory-library-book");
+    if (!m) return { kind: "not-found", suggestions: [...exampleQuestions] };
     return {
       kind: "answer",
       answer: {
@@ -113,7 +118,7 @@ function mockAsk(question: string): AskResult {
         citedMemoryId: m.id,
         timeLabel: m.startedAtLabel,
         frameSeed: m.frameSeed,
-        highlightMask: (m.highlight!.mask as Point[]).map((p) => ({ ...p })),
+        highlightMask: m.highlight?.mask.map(p => ({ ...p })) ?? [],
       },
     };
   } else {
@@ -128,7 +133,7 @@ function mockAsk(question: string): AskResult {
 /** Mock voice-command parser → capture plan + freshly saved memory. */
 function mockCapture(command: string): { plan: CapturePlan; savedMemory: Memory } {
   const seed = 100 + memories.length * 7;
-  const plan: CapturePlan = { clip: true, includeLocation: true, note: null };
+  const plan: CapturePlan = { clip: true, includeLocation: getPreferences().locationEnabled ?? true, note: command };
   const savedMemory: Memory = {
     id: `memory-mock-${Date.now()}`,
     kind: "clip",
@@ -142,7 +147,7 @@ function mockCapture(command: string): { plan: CapturePlan; savedMemory: Memory 
     }),
     frameSeed: seed,
     tags: ["today"],
-    location: { label: "Home — Hallway", lat: 40.7412, lng: -73.9896 },
+    location: plan.includeLocation ? { label: "Home — Hallway", lat: 40.7412, lng: -73.9896 } : undefined,
     clipDurationSec: 24,
   };
   memories = [savedMemory, ...memories];
@@ -152,12 +157,13 @@ function mockCapture(command: string): { plan: CapturePlan; savedMemory: Memory 
 export const mockClient: SecondMemoryClient = {
   async listSessions() { await mockDelay(); return getPreviewState() === "empty" ? [] : structuredClone(sessions); },
   async getSession(id) { await mockDelay(); return structuredClone(sessions.find(s => s.id === id) ?? null); },
-  async saveSession(seconds, bookmarks, _keepLocal) {
+  async saveSession(seconds, bookmarks, _keepLocal, notes = []) {
     await mockDelay();
-    const session = { ...structuredClone(mockSessions[0]), id: `session-${Date.now()}`, createdAt: new Date().toISOString(), durationSec: seconds, bookmarks: bookmarks.map(seconds => ({ seconds, label: "Bookmark" })) };
+    const session = { ...structuredClone(mockSessions[0]), id: `session-${Date.now()}`, createdAt: new Date().toISOString(), durationSec: seconds, bookmarks: bookmarks.map(seconds => ({ seconds, label: c.bookmark })), chunks: [...structuredClone(mockSessions[0].chunks).filter(chunk => chunk.seconds <= seconds), ...notes.map((text, i) => ({ id: `note-${i}`, seconds, text, frameSeed: 47 }))] };
     // TODO: attach a local URI only once a real local video exists. Never invent a playable recording.
     sessions = [session, ...sessions]; return session;
   },
+  async sendSessionCommand(command) { await mockDelay(); return { note: command, plan: { clip: false, includeLocation: false, note: command } }; },
   async deleteSession(id) { await mockDelay(); sessions = sessions.filter(s => s.id !== id); },
   async createReminder(text) { await mockDelay(); reminders = [{ id: `reminder-${Date.now()}`, text, timeLabel: "Today", done: false }, ...reminders]; },
   async getSightings(id) {
@@ -207,7 +213,7 @@ export const mockClient: SecondMemoryClient = {
   async deleteAllMemories() {
     await delay(MOCK_LATENCY_MS);
     memories = [];
-    sessions = []; reminders = []; recap = null as unknown as typeof recap;
+    sessions = []; reminders = []; recap = null;
   },
 
   async ask(question) {

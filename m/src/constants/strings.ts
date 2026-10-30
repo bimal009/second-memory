@@ -174,6 +174,7 @@ export const strings = {
 } as const;
 
 export const uiCopy = {
+  previousFrame: "Previous frame", nextFrame: "Next frame", framePosition: "Frame {current} of {total}",
   brand: "Second Memory", close: "Close", back: "Back", cancel: "Cancel", retry: "Try again", loading: "Loading your memories", error: "Your memories couldn't load.", offline: "You're offline. Reconnect to try again.", empty: "A little space for what matters", emptyBody: "Save your first moment from the camera.",
   ask: "Ask", camera: "Camera", memories: "Memories", today: "Today", settings: "Settings", all: "All", moments: "Moments", sessions: "Sessions", places: "Places", yesterday: "Yesterday",
   cameraEyebrow: "BE HERE. REMEMBER LATER.", cameraTitle: "A little less to\nkeep in your head.", cameraHint: "Tap to keep a moment. Hold to talk to {name}.", fallbackName: "your assistant", openCamera: "Open camera settings", preview: "Camera preview", previewBody: "Preview isn't available on this device. Try the capture controls below.", permission: "Camera access is off", permissionBody: "Enable camera access for a live preview. Your memories are still available.", previewError: "Preview couldn't start", previewRetry: "Retry preview", flip: "Flip camera", flashOn: "Turn flash on", flashOff: "Turn flash off", locationOn: "Include location", locationOff: "Exclude location", pause: "Pause buffer", resume: "Resume buffer",

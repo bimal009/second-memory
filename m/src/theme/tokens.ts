@@ -114,10 +114,10 @@ export const chartColors = [
 ] as const;
 
 export const radius = {
-  sm: 6,
-  md: 8,
+  sm: 10,
+  md: 10,
   base: 10,
-  lg: 14,
+  lg: 10,
   pill: 999,
 } as const;
 

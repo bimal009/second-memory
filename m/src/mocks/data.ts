@@ -38,7 +38,7 @@ export const mockMemories: Memory[] = [
     createdAt: todayAt(9, 14),
     startedAtLabel: "9:14 AM",
     frameSeed: 11,
-    tags: ["home", "documents"],
+    tags: ["home", "documents", "passport"],
     location: { label: "Home — Hallway", lat: 40.7412, lng: -73.9896 },
     highlight: {
       mask: [

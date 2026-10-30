@@ -15,7 +15,8 @@ import type { Session, Sighting, PrivacyReceipt } from "@/types/session";
 export interface SecondMemoryClient {
   listSessions(): Promise<Session[]>;
   getSession(id: string): Promise<Session | null>;
-  saveSession(seconds: number, bookmarks: number[], keepLocal: boolean): Promise<Session>;
+  saveSession(seconds: number, bookmarks: number[], keepLocal: boolean, notes?: string[]): Promise<Session>;
+  sendSessionCommand(command: string): Promise<{ note: string; plan: CapturePlan }>;
   deleteSession(id: string): Promise<void>;
   createReminder(text: string): Promise<void>;
   getSightings(memoryId: string): Promise<Sighting[]>;

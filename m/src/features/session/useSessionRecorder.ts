@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/api/client";
 import type { Session } from "@/types/session";
+import { sessionClock, sessionPolicy } from "./policy";
 
 /** TODO(native): one 480p low-bitrate video+audio recorder, 60s chunks.
  * TODO(upload): retry queue; delete each raw chunk ONLY after server acknowledgment.
@@ -15,11 +16,12 @@ export function useSessionRecorder(onReady: (session: Session) => void, keepLoca
   const [error, setError] = useState<unknown>();
   const startAt = useRef(0); const inFlight = useRef(false); const emitted = useRef(0);
   const secondsRef = useRef(0); const bookmarksRef = useRef<number[]>([]);
+  const notesRef = useRef<string[]>([]);
   const stop = useCallback(async () => {
     if (inFlight.current) return;
     inFlight.current = true; setPhase("building"); setError(undefined);
     try {
-      const result = await api.saveSession(secondsRef.current, bookmarksRef.current, keepLocal);
+      const result = await api.saveSession(secondsRef.current, bookmarksRef.current, keepLocal, notesRef.current);
       setPhase("idle"); onReady(result);
     } catch (e) { setError(e); setPhase("error"); }
     finally { inFlight.current = false; }
@@ -27,14 +29,15 @@ export function useSessionRecorder(onReady: (session: Session) => void, keepLoca
   useEffect(() => {
     if (phase !== "running") return;
     const timer = setInterval(() => {
-      const elapsed = Math.min(3600, Math.floor((Date.now() - startAt.current) / 1000));
+      const clock = sessionClock(startAt.current, Date.now());
+      const elapsed = clock.seconds;
       secondsRef.current = elapsed; setSeconds(elapsed);
-      const finished = Math.floor(elapsed / 60);
+      const finished = clock.finishedChunks;
       if (finished > emitted.current) {
         const additions = Array.from({ length: finished - emitted.current }, (_, i) => emitted.current + i + 1);
         emitted.current = finished; setWaiting(q => [...q, ...additions]);
       }
-      if (elapsed >= 3600) void stop();
+      if (clock.stop) void stop();
     }, 1000);
     return () => clearInterval(timer);
   }, [phase, stop]);
@@ -50,9 +53,10 @@ export function useSessionRecorder(onReady: (session: Session) => void, keepLoca
     return () => { alive = false; clearTimeout(timer); };
   }, [waiting]);
   const start = () => {
-    startAt.current = Date.now(); secondsRef.current = 0; emitted.current = 0; bookmarksRef.current = [];
+    startAt.current = Date.now(); secondsRef.current = 0; emitted.current = 0; bookmarksRef.current = []; notesRef.current = [];
     setSeconds(0); setBookmarks([]); setUploaded(0); setWaiting([]); setError(undefined); setPhase("running");
   };
   const bookmark = () => { bookmarksRef.current = [...bookmarksRef.current, secondsRef.current]; setBookmarks(bookmarksRef.current); };
-  return { phase, seconds, bookmarks, uploaded, waiting: waiting.length, error, start, stop, bookmark, active: phase === "running", warning: seconds >= 2700 };
+  const note = (text: string) => { notesRef.current = [...notesRef.current, text]; };
+  return { phase, seconds, bookmarks, uploaded, waiting: waiting.length, error, start, stop, bookmark, note, active: phase === "running", warning: seconds >= sessionPolicy.warnSeconds };
 }

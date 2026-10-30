@@ -6,16 +6,19 @@ import * as Haptics from "expo-haptics";
 import { darkColors } from "@/theme/tokens";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { uiCopy as c } from "@/constants/strings";
+import { shutterIntent } from "@/features/camera/policy";
 type Props = { onTap: () => void; onHoldStart: () => void; onHoldEnd: () => void; onHoldCancel?: () => void; disabled?: boolean; label?: string };
 export function Shutter({ onTap, onHoldStart, onHoldEnd, onHoldCancel, disabled, label = c.shutter }: Props) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null); const start = useRef(0); const held = useRef(false);
+  const lastIntent = useRef<"tap" | "hold" | "cancel">("cancel");
   const [holding, setHolding] = useState(false); const scale = useSharedValue(1); const reduced = useReducedMotion();
   const animation = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { if (disabled) { if (timer.current) clearTimeout(timer.current); if (held.current) onHoldCancel?.(); held.current = false; scale.set(1); } }, [disabled, onHoldCancel, scale]);
-  return <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={c.tapHoldHint} accessibilityState={{ disabled }}
+  return <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={c.tapHoldHint} accessibilityState={{ disabled }} onAccessibilityTap={disabled ? undefined : onTap}
     onPressIn={() => { start.current = Date.now(); held.current = false; void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); scale.set(withTiming(0.92, { duration: reduced ? 0 : 150 })); timer.current = setTimeout(() => { held.current = true; setHolding(true); void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); onHoldStart(); }, 350); }}
-    onPressOut={() => { if (timer.current) clearTimeout(timer.current); scale.set(withTiming(1, { duration: reduced ? 0 : 200 })); const elapsed = Date.now() - start.current; if (!disabled) { if (held.current) { onHoldEnd(); void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } else if (elapsed < 180) onTap(); } held.current = false; setHolding(false); }}
+    onPressOut={() => { if (timer.current) clearTimeout(timer.current); scale.set(withTiming(1, { duration: reduced ? 0 : 200 })); lastIntent.current = held.current ? "hold" : shutterIntent(Date.now() - start.current); if (!disabled && held.current) { onHoldEnd(); void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } held.current = false; setHolding(false); }}
+    onPress={() => { if (!disabled && lastIntent.current === "tap") onTap(); }}
     style={({ pressed }) => [styles.ring, { borderColor: darkColors.primary, opacity: disabled ? 0.4 : pressed ? 0.85 : 1 }]}>
     <Animated.View style={[styles.core, { backgroundColor: holding && !disabled ? darkColors.primary : darkColors.foreground }, animation]}>{holding && !disabled ? <Mic size={32} color={darkColors.primaryForeground} accessible={false} /> : <View style={[styles.dot, { backgroundColor: darkColors.primary }]} />}</Animated.View>
   </Pressable>;
