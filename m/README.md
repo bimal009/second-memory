@@ -1,54 +1,68 @@
-# Second Memory (mobile)
+# Second Memory mobile UI
 
-Voice-triggered memory capture — hold to talk, keep what matters, find it later.
-
-A **UI-only** Expo (SDK 58, React Native 0.88, TypeScript strict) implementation with Expo Router. All data comes from an in-app mock client; every real backend/native seam is marked with a `TODO` stub (see below).
+The Expo project is in **m/** (the requested mobile project, kept at its existing path).
+The app is a call-like memory assistant with continuous **simulated** capture runs.
+There is no rolling buffer, remote media, sound file, real recording, or upload in this UI.
 
 ## Run
 
-```bash
+From this directory:
+
+```sh
 pnpm install
-npx tsc --noEmit   # typecheck
-npx eslint src     # lint
-npx expo start     # dev server
+npx expo start
+npx tsc --noEmit
+pnpm lint
 ```
 
-Open in Expo Go (scan the QR) or a simulator. If a native module dialog appears, prefer a [development build](https://docs.expo.dev/develop/development-builds/introduction/).
+The existing bootstrap, onboarding, permissions, secure key, and identity API remain in place. The pager is available only when bootstrap is ready. Do not bypass that flow to access the UI.
 
-## Structure
+**Native rebuild required:** expo-video 58.0.13 and its config plugin were added with permission. The pager uses react-native-pager-view 9.0.7. Existing dev clients must include both modules. No generated Android/iOS source was edited. Background recording and picture-in-picture were not enabled.
 
-- `src/app/` — routes only (root `_layout.tsx` + fonts/providers + global RecordingBanner, `(tabs)/` capture/ask/memories/today/settings, `onboarding.tsx`, `memory/[id].tsx`)
-- `src/features/` — screens and feature hooks (`capture`, `ask`, `memories`, `today`, `settings`, `onboarding`)
-- `src/components/ui/` — primitives (Text/Button/IconButton/Card/Chip/Badge/SwitchRow/Skeleton/EmptyState/ScreenContainer/BottomSheet)
-- `src/components/domain/` — feature components (frames + highlight, RecordingBanner, BufferMeter, HoldToTalkButton, CapturePlanChips, MemoryCard, CitedAnswerCard, LocationCard, ReminderRow, RecapCard)
-- `src/theme/` — design tokens (`tokens.ts` is the **only** place colors are defined), spacing, Inter typography
-- `src/constants/strings.ts` — every user-facing string (`{name}` interpolates the assistant name)
-- `src/api/` — `SecondMemoryClient` interface + `mockClient` (**the backend swap point**: replace `mockClient` in `src/api/index.ts` with an HTTP client; nothing else changes)
-- `design-system/second-memory/MASTER.md` — persisted design system notes
+The app was not launched in this change, per your instruction. Static verification does not replace the device checks below.
 
-## Stubbed seams (UI-only)
+## Backend replacement seams
 
-All of these work against mocks and carry `TODO(backend)` / `TODO(native)` comments:
+| Seam | Current behavior / replacement |
+| --- | --- |
+| src/api/domainClient.ts + runClient.ts | Typed UI contract; replace mockClient through src/api/index.ts. Launch/identity HTTP client is separate and unchanged. |
+| src/api/mockClient.ts + mockRunClient.ts + mockStore.ts | In-memory memories, 2 runs, 20 chunks, 5 bookmarks, 3 reminders, recap, question history and receipts. Reload resets demo data. |
+| features/run/useChunkRecorder.ts | Mock active-time clock and 20/30/45/60s chunks; single capture owner. Native recorder belongs here. No video/audio APIs are called. |
+| features/run/useUploadQueue.ts | In-memory idempotent retry queue. Replace with durable uploads and raw-file deletion only after server acknowledgment. Queue survives navigation, not a process restart. |
+| features/camera/useAssistantCommand.ts | Seeded push-to-talk transcript. Replace recognition; API interprets bookmark/reminder/ask/control. Text composer exercises all intents today. |
+| features/camera/useLocation.ts | Mock coordinates through API; replace with consented expo-location data. |
+| components/domain/LocalRecordingPlayer.tsx | Real expo-video controls, mounted only if the API supplies a localCopyUri. Mock data never fabricates media files. Keep-local setting is persisted but recording remains a stub. |
+| reminders / voice replies | Mock reminder data and settings; notification scheduling and spoken replies remain backend/native integration work. Haptics only. |
 
-| Seam | Where | What's mocked |
-| --- | --- | --- |
-| Capture / recognition | `src/features/capture/CaptureSessionProvider.tsx`, `src/hooks/useAssistantCommand.ts` | Session lifecycle, "keep the toolbox" transcript, parsed capture plan |
-| Rolling buffer | `src/hooks/useRollingBuffer.ts`, `BufferMeter` | Seconds counter only — no real on-device buffer |
-| Location | `src/hooks/useLocation.ts` | Tries `expo-location`, falls back to mock coordinates (Media/home) |
-| API | `src/api/mockClient.ts` | ~14 seeded memories, keyword-ask scoring, 450ms latency, in-memory settings/mutations |
-| Ask (voice) | `src/features/ask/useAsk.ts` | Hold-to-ask sends a canned transcribed question |
-| Settings persistence | `src/features/settings/context.tsx` | In-memory only; resets on reload |
-| Camera preview | `src/features/capture/CameraStage.tsx` | Real `CameraView` preview; placeholder on simulator/denied |
-| Reminders / notifications | `expo-notifications` configured in `app.json` only | No scheduler is wired |
+Capture is independent of page selection. One CameraView lives beneath the pager. Leaving the app pauses capture; returning never resumes it automatically. Offline chunks wait and retry after connectivity returns. Stop flushes the partial chunk and opens the run detail; a run under ten seconds requires confirmation.
 
-## Notes
+## Third-party assets and licenses
 
-- Haptics only on confirmations/important actions (`useHaptics`).
-- All animations are `react-native-reanimated`, transform/opacity-only, 150–300ms, and respect reduced motion.
-- Touch targets are ≥ 48px; icon-only controls carry `accessibilityLabel`s.
-- RN 0.88 removed `StyleSheet.absoluteFillObject` — use the local `ABS_FILL` constants pattern.
+- **Inter** headings/body, bundled by @expo-google-fonts/inter and loaded with expo-font: **SIL OFL 1.1**; package code MIT. One font family.
+- **Lucide** vector icons: **ISC**, with listed Feather-derived icons under **MIT**.
+- Placeholder frames and masks are generated by project code; no external photo/video assets or remote image URLs.
+- No sound assets. Feedback uses expo-haptics.
+- expo-video and react-native-pager-view are MIT-licensed code dependencies.
 
-## Learn more
+License notices are retained in assets/licenses and installed packages.
 
-- [Expo documentation](https://docs.expo.dev/)
-- [Expo Router](https://docs.expo.dev/router/introduction/)
+## Manual tests (pending device run)
+
+- Swipe Camera ? Ask / Today; use Ask / Today buttons and Camera return button. Capture timer and uploads must continue.
+- Swipe up on Camera ? Memories; use Memories button. Drag sheet down or press Close. Capture continues and the recording pill stays visible.
+- Open Settings, memory, run and privacy-receipt details; Back/Close works and capture state stays visible. Native confirmation sheets also show the pill.
+- Background during capture, then return: elapsed time excludes background time, reason is shown, and capture stays paused until Resume.
+- Tap idle shutter ? start. Tap during capture ? one bookmark and haptic. Hold ?350ms ? listening transcript; release sends. A 180?349ms hold must do nothing.
+- Hold on Camera ? seeded passport question and answer overlay. Close or drag overlay down; Open in Ask shows the same question. Capture continues.
+- Open message composer for bookmark, reminder, pause, resume and stop commands. Check plan chips, confirmation and reminders.
+- Stop under 10s ? confirmation; Cancel keeps capture active. Stop after 10s ? run details. A final partial chunk appears after upload.
+- At 45 minutes show warning; at 60 auto-stop.
+- Deny camera permission / use simulator: fallback and settings action, no crash. Revoke permission during capture: error/pause, retry/resume explicitly.
+- Toggle airplane mode during capture: waiting count increases; reconnection uploads each chunk once. Ask/Today/Memories show offline feedback and Retry.
+- Search/filter All, Bookmarks, Runs, Places; open frames, highlight toggle, previous/next buttons, coordinates and Open in Maps.
+- Tap a run action item ? reminder; tap bookmark/chunk ? matching memory. Confirm single/run deletion and type DELETE for all memories.
+- Change name, Light/Dark/System, chunk length, voice replies and keep-local setting. Chunk length applies to the next run. Glasses and face blur stay unavailable.
+- With a real local file URI supplied through the API, verify native video controls and failed-file state. No player is shown without a URI.
+- Review 375px portrait, landscape, tablet, largest text, screen reader order, keyboard, reduced motion, both themes and safe areas.
+
+For deterministic empty/error/denied/offline previews, set EXPO_PUBLIC_MOCK_STATE to empty, error, denied or offline before starting Metro. Unset it for normal behavior. Real connectivity also drives the offline state. Test controls are not shown in the product UI.

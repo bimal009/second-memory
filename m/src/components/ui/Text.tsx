@@ -10,7 +10,7 @@ export type AppTextProps = RNTextProps & {
   /** Token key ("mutedForeground") or literal hex. */
   color?: string;
   align?: "left" | "center" | "right";
-  /** Dynamic Type support; keeps layout stable by scaling max +40%. */
+  /** Dynamic Type support; zero means no scaling cap. */
   maxFontSizeMultiplier?: number;
 };
 

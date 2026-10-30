@@ -2,7 +2,8 @@ packages:
   - server
   - m
   - types
+
 allowBuilds:
-  esbuild: set this to true or false
-  ffmpeg-static: set this to true or false
-  unrs-resolver: set this to true or false
+  esbuild: false
+  ffmpeg-static: false
+  unrs-resolver: true

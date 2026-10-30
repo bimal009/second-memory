@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ApiRequestError } from "@/axios";
+import { isAxiosError } from "axios";
 import { getMe } from "@/api/me";
 import { readKey } from "@/lib/secureKey";
 import { hydratePreferences, updatePreferences } from "@/lib/preferences";
@@ -23,7 +23,7 @@ async function bootstrap(): Promise<
       () => {},
     );
   } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 401) {
+    if (isAxiosError(error) && error.response?.status === 401) {
       return "needsOnboarding";
     }
     throw error;

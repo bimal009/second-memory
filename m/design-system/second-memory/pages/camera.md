@@ -1,56 +1,18 @@
-# Camera Page Overrides
+# Camera page override ? continuous capture call
 
-> **PROJECT:** Second Memory
-> **Generated:** 2026-10-30 11:07:16
-> **Page Type:** Native camera capture surface (reviewed override)
+Overrides the existing MASTER where it conflicts with this native app. MASTER remains untouched.
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** the Master file (`design-system/MASTER.md`).
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
+- User's exact lime palette in src/theme/tokens.ts; camera always dark, text on strong scrims.
+- Inter/Inter: one OFL font family, loaded by expo-font. Lucide outline icons only, 24pt; decorative icons hidden from accessibility.
+- Call header: assistant name from settings, Watching / Listening / Thinking. No marketing headline or buffer/session mode switch.
+- Top avatar / recording pill / flip; status strip; 48pt tools with 8pt gaps; shutter + message + stop; labeled pager navigation.
+- Capture is idle until Start. Tap active shutter bookmarks. Hold starts simulated PTT. A short unfinished hold is not a tap.
+- Default chunks: 30s. Capture is owned by CaptureProvider and never gated by page or sheet focus. CameraView is mounted at pager root.
+- App background ? background_paused. Return requires Resume. Indicator and pause reason persist above pages and in native sheets.
+- Answer overlay follows a downward drag and has Close/Open in Ask alternatives. Capture stays active behind it.
+- No rolling buffer, clip replay, copied logos, downloaded images, or sound assets. Optional local-copy player only with a real API-provided URI.
+- 16pt camera gutters; 24pt content gutters; 4/8pt spacing rhythm; radius 10 except circular shutter/pills.
+- 150?300ms transform/opacity transitions. Reduced motion disables animation. Sheet vertical pan fails on horizontal movement to protect pager swipes.
+- API loading/error/offline states, denied-camera fallback, and uncapped Dynamic Type outside camera.
 
----
-
-## Page-Specific Rules
-
-### Layout Overrides
-
-- Full-bleed camera preview. Controls sit within device safe areas. Native portrait and landscape support.
-- Top: avatar, indicator, flip. Side: 48pt tools with 8pt gaps. Bottom: modes, shutter, labeled navigation.
-- Use a three-page horizontal pager, not a dashboard grid. Vertical gesture fails if horizontal movement exceeds 16pt.
-
-### Spacing Overrides
-
-- 4/8pt rhythm. Content gutters 16pt camera, 24pt non-camera. Targets at least 48pt.
-
-### Typography Overrides
-
-- No overrides — use Master typography
-
-### Color Overrides
-
-- The user's exact lime tokens in `src/theme/tokens.ts` override MASTER's blue palette.
-- Camera always uses dark colors, including in light mode. Text over live preview sits on an 88% black scrim.
-- Lime fills and highlights only; use #4D7C0F for light-surface text/icons.
-
-### Component Overrides
-
-- Avoid: Default keyboard for all inputs
-- Avoid: Desktop-first causing mobile issues
-- Avoid: Enable by default everywhere
-
----
-
-## Page-Specific Components
-
-- Shutter: tap <180ms saves; 180–349ms does nothing; hold >=350ms starts simulated push-to-talk. Release sends one command.
-- Buffer runs only when focused, foreground, permission available, no overlay/session/privacy pause. Display the reason whenever paused.
-- Session is a separate simulated recorder; its preview is the explicit session exception, and its buffer remains paused.
-- 150/200/250/300ms transform/opacity transitions. Respect reduced motion, and keep text scalable.
-
----
-
-## Recommendations
-
-- Effects: Subtle hover (200-250ms), smooth transitions, sharp shadows if any, clear type hierarchy, fast loading
-- Forms: Use inputmode attribute
-- Responsive: Start with mobile styles then add breakpoints
-- Touch: Disable where not needed
+Design evidence: Flat Design and Inter/Inter matched. Product-demo landing patterns and blue palette were rejected for this native surface. Touch spacing, loading feedback, dragging alternatives and reduced-motion searches matched. No useful safe-area or Lucide-specific database match: applied native pro-rules guidance and user's Lucide requirement.

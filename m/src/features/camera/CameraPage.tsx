@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { SwitchCamera, UserRound, MessageSquare, Flag } from "lucide-react-native";
+import { SwitchCamera, UserRound, MessageSquare } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Shutter } from "@/components/domain/Shutter";
 import { RecordingPill } from "@/components/domain/RecordingPill";
+import { BookmarkFeedback } from "@/components/domain/BookmarkFeedback";
 import { CaptureStatus } from "@/components/domain/CaptureStatus";
 import { IntentPlanChips } from "@/components/domain/IntentPlanChips";
 import { AnswerOverlay } from "@/components/domain/AnswerOverlay";
@@ -44,7 +45,7 @@ export function CameraPage() {
       <CaptureStatus />
       <View style={styles.middle}><PreviewFallback /><CameraTools /></View>
       <View style={styles.controls}>
-        {!!caption && <View accessibilityLiveRegion="polite" style={[styles.scrim, { padding: 12, flexDirection: "row", gap: 8 }]}>{saved && <Flag accessible={false} color={colors.foreground} size={24} />}<Text align="center" style={styles.text}>{caption}</Text></View>}
+        {!!caption && <View accessibilityLiveRegion="polite" style={[styles.scrim, { padding: 12, flexDirection: "row", gap: 8 }]}>{saved && <BookmarkFeedback />}<Text align="center" style={styles.text}>{caption}</Text></View>}
         <IntentPlanChips visible={command.visible} result={command.data} location={capture.settings.data?.locationEnabled ?? true} />
         {active && capture.elapsed < 8 && <Text variant="caption" style={[styles.text, styles.scrim]}>{c.consent}</Text>}
         {capture.warning && !idle && <Text variant="caption" style={[styles.text, styles.scrim]}>{c.warning}</Text>}

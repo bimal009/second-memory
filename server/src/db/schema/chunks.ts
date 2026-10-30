@@ -29,7 +29,9 @@ export const chunks = pgTable(
     accuracyM: real("accuracy_m"),
     status: text("status").notNull().default("uploaded"),
     error: text("error"),
-    uploadBytes: bigint("upload_bytes", { mode: "number" }).notNull().default(0),
+    uploadBytes: bigint("upload_bytes", { mode: "number" })
+      .notNull()
+      .default(0),
     framesKept: integer("frames_kept").notNull().default(0),
     rawDeletedAt: timestamp("raw_deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })

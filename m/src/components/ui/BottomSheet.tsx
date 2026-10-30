@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import {
   BackHandler,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -79,7 +80,7 @@ export function BottomSheet({
 
   return (
     <Modal transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
-      <View style={[styles.fill, { justifyContent: "flex-end", paddingTop: insets.top }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={[styles.fill, { justifyContent: "flex-end", paddingTop: insets.top }]}>
         <Animated.View style={[styles.fill, styles.scrimBg, scrim]}>
           <Pressable
             accessibilityRole="button"
@@ -113,7 +114,7 @@ export function BottomSheet({
           ) : null}
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.body}>{children}</ScrollView>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

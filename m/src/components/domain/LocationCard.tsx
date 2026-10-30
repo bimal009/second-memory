@@ -44,11 +44,11 @@ export function LocationCard({ location, compact }: LocationCardProps) {
       ]}
     >
       <View style={styles.row}>
-        <MapPin size={20} color={colors.isDark ? colors.primary : limeDeep} />
+        <MapPin accessible={false} size={24} color={colors.isDark ? colors.primary : limeDeep} />
         <View style={styles.textBlock}>
           <Text variant="bodyMedium">{location.label}</Text>
           {!compact ? (
-            <Text variant="caption" color="mutedForeground">
+            <Text variant="caption" color="foreground">
               {location.lat}, {location.lng}
             </Text>
           ) : null}
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    minHeight: touchTarget - 4,
+    minHeight: touchTarget,
     alignItems: "center",
     justifyContent: "center",
   },

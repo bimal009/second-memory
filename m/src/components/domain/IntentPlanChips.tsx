@@ -8,7 +8,7 @@ import { captureCopy as c } from "@/constants/strings";
 import type { AssistantCommand } from "@/types/command";
 export function IntentPlanChips({ result, visible, location }: { result?: AssistantCommand; visible: boolean; location: boolean }) {
   const reduced = useReducedMotion(); const opacity = useSharedValue(0);
-  useEffect(() => { opacity.set(withTiming(visible ? 1 : 0, { duration: reduced ? 0 : 200 })); }, [visible, reduced, opacity]);
+  useEffect(() => { opacity.set(withTiming(visible ? 1 : 0, { duration: reduced ? 0 : 200 })); if (!visible || reduced) return; const timer = setTimeout(() => opacity.set(withTiming(0, { duration: 250 })), 2750); return () => clearTimeout(timer); }, [visible, reduced, opacity]);
   const animation = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ translateY: (1 - opacity.value) * 8 }] }));
   if (!result || !visible) return null;
   const labels = result.intent === "bookmark" ? [c.note, ...(location ? [c.location] : [])] : result.intent === "reminder" ? [result.text, result.due] : result.intent === "ask" ? [c.searching] : [result.action === "pause" ? c.paused : result.action === "stop" ? c.endRun : c.capturing];
