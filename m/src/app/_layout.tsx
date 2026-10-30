@@ -16,7 +16,8 @@ import { queryClient } from "@/lib/queryClient";
 import { useBootstrap } from "@/features/bootstrap/useBootstrap";
 import { BootstrapStatus } from "@/features/bootstrap/BootstrapStatus";
 import { ThemeProvider } from "@/theme/ThemeProvider";
-import { RecordingProvider, RecordingGate } from "@/features/recording/RecordingProvider";
+import { AppPagerProvider } from "@/features/pager/AppPagerProvider";
+import { RecordingBanner } from "@/features/pager/RecordingBanner";
 import { lightColors } from "@/theme/tokens";
 import { registerDevice } from "@/lib/push";
 
@@ -36,10 +37,10 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
           <ThemeProvider>
-            <RecordingProvider>
+            <AppPagerProvider>
             <StatusBar style="dark" />
             <RootNavigator />
-            </RecordingProvider>
+            </AppPagerProvider>
           </ThemeProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
@@ -61,7 +62,7 @@ function RootNavigator() {
 
   return (
     <View style={styles.root}>
-      <RecordingGate enabled={state === "ready"} />
+      {state === "ready" && <RecordingBanner />}
       <Stack screenOptions={{ headerShown: false, animation: "none" }}>
         <Stack.Screen name="home-preview" />
         <Stack.Protected guard={state === "needsOnboarding"}>
@@ -74,6 +75,7 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="memory/[id]" />
           <Stack.Screen name="session" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="session/[id]" options={{ animation: "fade" }} />
           <Stack.Screen name="privacy-receipt" options={{ animation: "slide_from_right" }} />
         </Stack.Protected>
       </Stack>

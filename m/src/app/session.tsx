@@ -1,1 +1,1 @@
-export { SessionScreen as default } from "@/features/session/SessionScreen";
+export { LegacySessionRoute as default } from "@/features/pager/LegacyPagerRoute";

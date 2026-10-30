@@ -15,11 +15,6 @@ type ThemeContextValue = {
 };
 
 const ThemeCtx = createContext<ThemeContextValue | null>(null);
-const lightTheme: ThemeContextValue = {
-  colors: lightColors,
-  isDark: false,
-  mode: "light",
-};
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const { settings } = usePreferences();

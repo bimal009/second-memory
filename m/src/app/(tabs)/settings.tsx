@@ -1,1 +1,1 @@
-export { SettingsScreen as default } from "@/features/settings/SettingsScreen";
+export { LegacySettingsRoute as default } from "@/features/pager/LegacyPagerRoute";

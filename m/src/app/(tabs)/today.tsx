@@ -1,1 +1,1 @@
-export { RemindersScreen as default } from "@/features/reminders/RemindersScreen";
+export { LegacyTodayRoute as default } from "@/features/pager/LegacyPagerRoute";

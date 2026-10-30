@@ -1,1 +1,1 @@
-export { AskScreen as default } from "@/features/ask/AskScreen";
+export { LegacyAskRoute as default } from "@/features/pager/LegacyPagerRoute";

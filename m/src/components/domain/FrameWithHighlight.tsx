@@ -17,7 +17,7 @@ export function GradientFrame({
   corners?: number;
 }) {
   const W = 100;
-  const H = 100 * aspect;
+  const H = 100 / aspect;
   const palette = chartColors;
   const a = palette[seed % palette.length]!;
   const b = palette[(seed + 2) % palette.length]!;
@@ -61,7 +61,7 @@ export function HighlightPolygon({
   fill: string;
 }) {
   const W = 100;
-  const H = 100 * aspect;
+  const H = 100 / aspect;
   const pts = mask.map((p) => `${p.x * W},${p.y * H}`).join(" ");
 
   if (mask.length < 3) return null;

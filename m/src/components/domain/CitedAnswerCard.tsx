@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
   },
   frame: ABS_FILL,
   metaRow: {
+    flexWrap: "wrap",
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
   },
   grow: { flex: 1 },
   toggle: {
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Linking, Pressable, StyleSheet, View } from "react-native";
 import { MapPin } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
@@ -6,6 +6,7 @@ import type { MemoryLocation } from "@/types";
 import { limeDeep, radius } from "@/theme/tokens";
 import { spacing, touchTarget } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
+import { uiCopy as c } from "@/constants/strings";
 
 export type LocationCardProps = {
   location: MemoryLocation;
@@ -20,19 +21,17 @@ function mapsUrl(lat: number, lng: number, label: string) {
 /** Styled coordinate card (no map SDK). "Open in Maps" via Linking. */
 export function LocationCard({ location, compact }: LocationCardProps) {
   const { colors } = useTheme();
+  const [error, setError] = useState(false);
 
   const open = () => {
+    setError(false);
     const url = mapsUrl(location.lat, location.lng, location.label);
     Linking.canOpenURL("geo:0,0")
       .then((ok) => {
-        try {
-          void Linking.openURL(ok ? url : `https://maps.google.com/?q=${location.lat},${location.lng}`);
-        } catch {
-          /* noop */
-        }
+        return Linking.openURL(ok ? url : `https://maps.google.com/?q=${location.lat},${location.lng}`);
       })
       .catch(() => {
-        /* noop */
+        setError(true);
       });
   };
 
@@ -56,7 +55,7 @@ export function LocationCard({ location, compact }: LocationCardProps) {
         </View>
         <Pressable
           accessibilityRole="link"
-          accessibilityLabel={`Open ${location.label} in Maps`}
+          accessibilityLabel={`${c.maps}: ${location.label}`}
           onPress={open}
           style={({ pressed }) => [
             styles.action,
@@ -68,10 +67,11 @@ export function LocationCard({ location, compact }: LocationCardProps) {
             variant="micro"
             style={{ color: colors.isDark ? colors.primary : limeDeep }}
           >
-            Open in Maps
+            {c.maps}
           </Text>
         </Pressable>
       </View>
+      {error && <Text variant="caption" color="destructive">{c.mapError}</Text>}
     </View>
   );
 }
@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   row: {
+    flexWrap: "wrap",
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,

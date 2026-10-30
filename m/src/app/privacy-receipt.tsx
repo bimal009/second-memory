@@ -1,1 +1,1 @@
-export { PrivacyScreen as default } from "@/features/privacy/PrivacyScreen";
+export { PrivacyReceipt as default } from "@/features/settings/PrivacyReceipt";

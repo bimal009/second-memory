@@ -16,7 +16,7 @@ import { strings } from "@/constants/strings";
 export type RecordingPillProps = {
   /** MM:SS elapsed. */
   timer: string;
-  paused: boolean;
+  paused?: boolean;
 };
 
 /** Pulsing "Recording" pill shown at the top of capture + RecordingBanner. */

@@ -1,1 +1,1 @@
-export { MemoriesScreen as default } from "@/features/memories/MemoriesScreen";
+export { LegacyMemoriesRoute as default } from "@/features/pager/LegacyPagerRoute";

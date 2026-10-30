@@ -49,7 +49,7 @@ export function Chip({ label, icon, selected, disabled, onPress }: ChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
-    minHeight: touchTarget - 4,
+    minHeight: touchTarget,
     paddingHorizontal: spacing.md,
     borderRadius: radius.pill,
     borderWidth: 1,

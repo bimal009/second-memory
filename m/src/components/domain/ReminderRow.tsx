@@ -57,6 +57,7 @@ export function ReminderRow({ reminder, onToggle }: ReminderRowProps) {
 
 const styles = StyleSheet.create({
   row: {
+    flexWrap: "wrap",
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
@@ -66,5 +67,5 @@ const styles = StyleSheet.create({
   icon: { width: 28, alignItems: "center" },
   body: { flex: 1 },
   done: { textDecorationLine: "line-through" },
-  time: { textAlign: "right" },
+  time: { textAlign: "right", flexShrink: 1 },
 });
