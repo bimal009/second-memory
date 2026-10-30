@@ -22,7 +22,7 @@ const yesterdayAt = (h: number, m: number) => {
   return d.toISOString();
 };
 
-export const mockMemories: Memory[] = [
+const originalMemories: Memory[] = [
   {
     id: "memory-passport-bag", kind: "place", title: "Passport in the travel bag", summary: "Before it moved to the blue drawer, the passport was in the front pocket of the travel bag.",
     transcript: "Passport is in the travel bag for now.", createdAt: yesterdayAt(17, 25), startedAtLabel: "5:25 PM", frameSeed: 19, tags: ["passport", "travel"],
@@ -306,7 +306,7 @@ export const mockRecap: DayRecap = {
   dateLabel: "Today",
   headline: "A day of small, important things",
   summary:
-    "You captured 8 moments today. The passport now officially lives in the blue drawer, the car is parked at level 3, pillar C4, and the library book needs to go back before Friday.",
+    "You captured useful details today. The passport now officially lives in the blue drawer, the car is parked at level 3, pillar C4, and the library book needs to go back before Friday.",
   keyMoments: [
     { label: "Passport in blue drawer", timeLabel: "9:14 AM", frameSeed: 11 },
     { label: "Car, level 3 / C4", timeLabel: "10:05 AM", frameSeed: 23 },
@@ -329,4 +329,21 @@ export const mockSessions: import("@/types/session").Session[] = [{
   bookmarks: [{ seconds: 320, label: "Estimate and timing" }, { seconds: 1240, label: "Next appointment" }],
   chunks: ["The inspection is complete and the car is ready to collect.", "Keep the service receipt with the vehicle records.", "The garage will email the written estimate on Friday.", "Extra work needs approval before it starts.", "Ask for an itemized estimate, including parts and labor.", "The current tires can stay in use for now.", "Book a follow-up appointment next month.", "A morning appointment should take about an hour.", "Bring the service booklet next time.", "The pickup desk closes at six."].map((text, index) => ({ id: `chunk-${index}`, seconds: index * 180 + 40, text, frameSeed: 70 + index })),
 }];
-export const mockReceipts: import("@/types/session").PrivacyReceipt[] = mockMemories.slice(0, 6).map((memory, index) => ({ id: memory.id, title: memory.title, files: 2, sizeMb: 1.2 + index * 0.1, audioSec: 8 + index, frames: 3 + index, rawDeleted: true }));
+export const mockReceipts: import("@/types/session").PrivacyReceipt[] = originalMemories.slice(0, 6).map((memory, index) => ({ id: memory.id, title: memory.title, files: 2, sizeMb: 1.2 + index * 0.1, audioSec: 8 + index, frames: 3 + index, rawDeleted: true }));
+
+// UI seed data: twenty chunk memories and five explicit bookmarks, across two runs.
+const extraNotes = ["Walked to the mall", "Receipt at the cafe", "Picked up the car", "Service booklet in the glovebox"];
+export const mockMemories: Memory[] = [...originalMemories, ...extraNotes.map((title, i) => ({ ...originalMemories[i], id: `memory-extra-${i}`, title, summary: title, transcript: title, tags: ["errands"], highlight: undefined }))].slice(0, 20).map((memory, i) => ({ ...memory, kind: "chunk", runId: i < 12 ? "run-today" : "run-yesterday", clipDurationSec: undefined, createdAt: i < 12 ? todayAt(14, i * 2) : yesterdayAt(16, i - 12), startedAtLabel: i < 12 ? `2:${String(i * 2).padStart(2, "0")} PM` : `4:0${i - 12} PM` }));
+const passportBag = mockMemories.find(m => m.id === "memory-passport-bag")!;
+passportBag.runId = "run-yesterday"; passportBag.createdAt = yesterdayAt(16, 9); passportBag.startedAtLabel = "4:09 PM";
+const bookmarkSources = [1, 3, 4, 5, 7];
+mockMemories.push(...bookmarkSources.map((index, i): Memory => ({ ...mockMemories[index], id: `bookmark-${i}`, kind: "bookmark", tags: ["bookmark", ...mockMemories[index].tags] })));
+export const mockRuns: import("@/types/run").Run[] = [
+  { id: "run-today", title: "Afternoon errands & service appointment", createdAt: todayAt(14, 0), durationSec: 1500, frameSeed: 72, chunkLength: 30, ended: true, summary: mockSessions[0].summary, actionItems: [...mockSessions[0].actionItems], bookmarks: [], chunks: [] },
+  { id: "run-yesterday", title: "Around the house", createdAt: yesterdayAt(16, 0), durationSec: 600, frameSeed: 23, chunkLength: 30, ended: true, summary: "Put things away at home and kept a few useful details for later.", actionItems: [], bookmarks: [], chunks: [] },
+];
+for (const run of mockRuns) {
+  run.chunks = mockMemories.filter(m => m.runId === run.id && m.kind === "chunk").map((m, i) => ({ id: `${run.id}-chunk-${i}`, runId: run.id, index: i + 1, seconds: i * (run.id === "run-today" ? 120 : 60), durationSec: 30, text: m.summary, frameSeed: m.frameSeed, memoryId: m.id, uploaded: true }));
+  run.bookmarks = mockMemories.filter(m => m.runId === run.id && m.kind === "bookmark").map((m, i) => ({ seconds: i * 120, label: m.transcript, memoryId: m.id }));
+}
+export const captureSeed = { title: "Capture run", summary: "Your captured moments and bookmarks.", note: "An everyday moment, saved as a text memory.", location: { label: "Home ? Hallway", lat: 40.7412, lng: -73.9896 } };

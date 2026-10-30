@@ -14,6 +14,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useBootstrap } from "@/features/bootstrap/useBootstrap";
 import { BootstrapStatus } from "@/features/bootstrap/BootstrapStatus";
 import { ThemeProvider } from "@/theme/ThemeProvider";
+import { CaptureProvider } from "@/features/run/CaptureProvider";
 import { AppPagerProvider } from "@/features/pager/AppPagerProvider";
 import { RecordingBanner } from "@/features/pager/RecordingBanner";
 import { lightColors } from "@/theme/tokens";
@@ -35,10 +36,10 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
           <ThemeProvider>
-            <AppPagerProvider>
+            <CaptureProvider><AppPagerProvider>
             <StatusBar style="dark" />
             <RootNavigator />
-            </AppPagerProvider>
+            </AppPagerProvider></CaptureProvider>
           </ThemeProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
@@ -74,6 +75,7 @@ function RootNavigator() {
           <Stack.Screen name="memory/[id]" />
           <Stack.Screen name="session" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="session/[id]" options={{ animation: "fade" }} />
+          <Stack.Screen name="run/[id]" options={{ animation: "fade" }} />
           <Stack.Screen name="privacy-receipt" options={{ animation: "slide_from_right" }} />
         </Stack.Protected>
       </Stack>

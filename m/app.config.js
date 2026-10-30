@@ -4,6 +4,7 @@ export default ({ config }) => ({
   ...config,
   plugins: [
     ...(config.plugins ?? []),
+    'expo-video',
     [
       'expo-build-properties',
       {

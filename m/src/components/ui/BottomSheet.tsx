@@ -20,6 +20,8 @@ import { IconButton } from "@/components/ui/IconButton";
 import { radius, motion, mediaColors } from "@/theme/tokens";
 import { spacing } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
+import { CaptureIndicator } from "@/components/domain/CaptureIndicator";
+import { captureCopy as c, uiCopy as u } from "@/constants/strings";
 import { X } from "lucide-react-native";
 
 export type BottomSheetProps = {
@@ -81,7 +83,7 @@ export function BottomSheet({
         <Animated.View style={[styles.fill, styles.scrimBg, scrim]}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Close"
+            accessibilityLabel={u.close}
             onPress={handleClose}
             style={styles.fill}
           />
@@ -90,19 +92,20 @@ export function BottomSheet({
           accessibilityRole={Platform.OS === "web" ? "dialog" : undefined}
           accessibilityViewIsModal
           onAccessibilityEscape={handleClose}
-          accessibilityLabel={title ?? "Sheet"}
+          accessibilityLabel={title ?? c.sheet}
           style={[
             sheet,
             styles.sheet,
             { backgroundColor: colors.card, paddingBottom: insets.bottom + spacing.lg },
           ]}
         >
+          <CaptureIndicator />
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           {title ? (
             <View style={styles.header}>
               <Text variant="heading" accessibilityRole="header">{title}</Text>
               <IconButton
-                accessibilityLabel="Close"
+                accessibilityLabel={u.close}
                 onPress={handleClose}
                 icon={<X size={20} color={colors.foreground} />}
               />

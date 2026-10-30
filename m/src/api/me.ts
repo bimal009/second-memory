@@ -1,12 +1,16 @@
 import { axiosInstance } from "@/axios";
-import type { MeOnboard, MeOnboardOut, MeOut } from "@/types/me";
+import type { CreateUserResponse, CreateUserSchema, User } from "@repo/types";
 
-export async function onboard(data: MeOnboard): Promise<MeOnboardOut> {
-  const response = await axiosInstance.post<MeOnboardOut>("/onboard", data);
-  return response.data;
+type CreatedUser = NonNullable<CreateUserResponse["data"]>;
+
+export async function createUser(data: CreateUserSchema): Promise<CreatedUser> {
+  const { data: user } = await axiosInstance.post<CreatedUser>("/users", data);
+  if (!user) throw new Error("User create returned no data");
+  return user;
 }
 
-export async function getMe(): Promise<MeOut> {
-  const response = await axiosInstance.get<MeOut>("/me");
-  return response.data;
+export async function getMe(): Promise<User> {
+  const { data: user } = await axiosInstance.get<User>("/users/me");
+  if (!user) throw new Error("User not found");
+  return user;
 }

@@ -1,3 +1,4 @@
+import type { RunClient as importRunClient } from "./runClient";
 import type {
   AppSettings,
   AskResult,
@@ -12,13 +13,13 @@ import type { Session, Sighting, PrivacyReceipt } from "@/types/session";
  * The only data seam the UI knows about. Swap `src/api/mockClient.ts` for an
  * HTTP-backed implementation later — no screen or component changes required.
  */
-export interface SecondMemoryClient {
+export interface SecondMemoryClient extends importRunClient {
   listSessions(): Promise<Session[]>;
   getSession(id: string): Promise<Session | null>;
   saveSession(seconds: number, bookmarks: number[], keepLocal: boolean, notes?: string[]): Promise<Session>;
   sendSessionCommand(command: string): Promise<{ note: string; plan: CapturePlan }>;
   deleteSession(id: string): Promise<void>;
-  createReminder(text: string): Promise<void>;
+  createReminder(text: string, due?: string): Promise<void>;
   getSightings(memoryId: string): Promise<Sighting[]>;
   getReceipts(): Promise<PrivacyReceipt[]>;
   getExamples(): Promise<string[]>;

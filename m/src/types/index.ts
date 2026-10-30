@@ -3,7 +3,7 @@
 export type Point = { x: number; y: number };
 
 /** What a memory was captured as. */
-export type MemoryKind = "clip" | "note" | "place";
+export type MemoryKind = "clip" | "note" | "place" | "chunk" | "bookmark";
 
 export type MemoryLocation = {
   label: string;
@@ -24,6 +24,8 @@ export type FrameHighlight = {
 export type Memory = {
   id: string;
   kind: MemoryKind;
+  runId?: string;
+  localCopyUri?: string;
   title: string;
   summary: string;
   transcript: string;
@@ -39,7 +41,7 @@ export type Memory = {
   clipDurationSec?: number;
 };
 
-export type MemoryFilterKey = "all" | "today" | "places" | "clips" | "reminders";
+export type MemoryFilterKey = "all" | "today" | "places" | "clips" | "reminders" | "bookmarks";
 
 /** What a voice command produced ("keep this", "add a note", …). */
 export type CapturePlan = {
@@ -98,6 +100,7 @@ export type ConnectedSource = {
 };
 
 export type AppSettings = {
+  chunkLength?: import("./run").ChunkLength;
   keepLocalRecording?: boolean;
   voiceReplies?: "off" | "earphones" | "always";
   assistantName: string;

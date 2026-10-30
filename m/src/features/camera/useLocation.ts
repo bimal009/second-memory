@@ -1,4 +1,4 @@
-import { api } from "@/api/client";
 import { useMemoryQuery } from "@/api/useMemoryQuery";
-/** TODO(location): use expo-location after permission; currently an API-seeded coordinate, never GPS access. */
-export function useLocation() { return useMemoryQuery(["location"], () => api.getLocation()); }
+import { api } from "@/api/client";
+/** TODO(location): obtain consented coordinates through expo-location. This stub never requests GPS. */
+export function useLocation(enabled = true) { return useMemoryQuery(["location", enabled], () => enabled ? api.getLocation() : Promise.resolve(undefined)); }

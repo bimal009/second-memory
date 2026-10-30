@@ -11,7 +11,7 @@ import { Text } from "@/components/ui/Text";
 import { radius } from "@/theme/tokens";
 import { spacing } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
-import { strings } from "@/constants/strings";
+import { captureCopy, strings } from "@/constants/strings";
 
 export type RecordingPillProps = {
   /** MM:SS elapsed. */
@@ -27,7 +27,7 @@ export function RecordingPill({ timer, paused }: RecordingPillProps) {
 
   useEffect(() => {
     if (reduced || paused) return;
-    pulse.value = withRepeat(withTiming(0.35, { duration: 900 }), -1, true);
+    pulse.value = withRepeat(withTiming(0.35, { duration: 300 }), -1, true);
     return () => {
       pulse.value = withTiming(1, { duration: 100 });
     };
@@ -38,7 +38,7 @@ export function RecordingPill({ timer, paused }: RecordingPillProps) {
     transform: [{ scale: 1 + (1 - pulse.value) * 0.35 }],
   }));
 
-  const label = paused ? strings.capture.paused : strings.capture.recording;
+  const label = paused ? strings.capture.paused : captureCopy.capturing;
 
   return (
     <View
