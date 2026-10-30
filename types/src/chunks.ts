@@ -9,16 +9,37 @@ export const chunkStatus = z.enum([
   "skipped",
   "failed",
 ]);
+export type ChunkStatus = z.infer<typeof chunkStatus>;
+
+export const localChunkStatus = z.enum([
+  "pending",
+  "uploading",
+  "uploaded",
+  "failed",
+]);
+export type LocalChunkStatus = z.infer<typeof localChunkStatus>;
+
+export const localChunkSchema = z.object({
+  id: z.string(),
+  capture_id: z.string().uuid(),
+  idx: z.number().int().min(0),
+  started_at: z.string(),
+  duration_s: z.number().min(MIN_CHUNK_DURATION_S).max(CHUNK_DURATION_S),
+  path: z.string().min(1),
+  status: localChunkStatus,
+  size: z.number().int().nonnegative(),
+  attempts: z.number().int().nonnegative(),
+  last_error: z.string().nullable(),
+  created_at: z.string(),
+});
+export type LocalChunk = z.infer<typeof localChunkSchema>;
 
 export const chunkSchema = z.object({
   id: z.string().uuid(),
   capture_id: z.string().uuid(),
   idx: z.number().int().min(0),
   started_at: z.string(),
-  duration_s: z
-    .number()
-    .min(MIN_CHUNK_DURATION_S)
-    .max(CHUNK_DURATION_S),
+  duration_s: z.number().min(MIN_CHUNK_DURATION_S).max(CHUNK_DURATION_S),
   lat: z.number().min(-90).max(90).nullable(),
   lng: z.number().min(-180).max(180).nullable(),
   accuracy_m: z.number().nullable(),
@@ -39,7 +60,8 @@ export const createChunkSchema = z
     duration_s: z.coerce
       .number()
       .min(MIN_CHUNK_DURATION_S)
-      .max(CHUNK_DURATION_S),
+      .max(CHUNK_DURATION_S)
+      .optional(),
     lat: z.coerce.number().min(-90).max(90).optional(),
     lng: z.coerce.number().min(-180).max(180).optional(),
     accuracy_m: z.coerce.number().optional(),

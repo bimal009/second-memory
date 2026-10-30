@@ -39,6 +39,13 @@
         }
       ],
       [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Second Memory uses the camera to see what you see, so moments can be found later by picture.",

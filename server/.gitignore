@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# env
+.env
+.env.*
+!.env.example
+
+# build / runtime
+dist/
+build/
+*.tsbuildinfo
+
+# capture media + temp uploads
+storage/**
+!storage/.gitkeep
+tmp/
+temp/
+*.tmp
+*.part
+
+# logs
+*.log
+logs/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# local databases
+*.db
+*.sqlite
+*.sqlite3

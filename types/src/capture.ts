@@ -2,12 +2,15 @@ import { z } from "zod";
 import { apiResponse } from "./responses";
 
 export const captureSource = z.enum(["phone", "glasses", "import"]);
+export type CaptureSource = z.infer<typeof captureSource>;
+
 export const captureStatus = z.enum([
   "recording",
   "processing",
   "ready",
   "failed",
 ]);
+export type CaptureStatus = z.infer<typeof captureStatus>;
 
 export const captureSchema = z.object({
   id: z.string().uuid(),

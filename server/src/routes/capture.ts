@@ -8,11 +8,14 @@ import {
 } from "@repo/types";
 import { db } from "../db/index";
 import { captures } from "../db/schema";
-import { captureDir } from "../lib/storage";
+import { captureDir, ensureCaptureDir } from "../lib/storage";
+import { chunksRouter } from "./chunk";
 
 type Env = { Variables: { userId: string } };
 
 export const captureRouter = new Hono<Env>();
+
+captureRouter.route("/:captureId/chunks", chunksRouter);
 
 captureRouter.post("/", async (c) => {
   const parsed = createCaptureSchema.safeParse(
@@ -46,6 +49,9 @@ captureRouter.post("/", async (c) => {
       500,
     );
   }
+
+  // Root folder for everything this capture will ever store on disk.
+  await ensureCaptureDir(capture.id);
 
   return c.json<ApiResponse<Capture>>(
     {

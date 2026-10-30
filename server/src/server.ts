@@ -7,9 +7,7 @@ import { ApiResponse } from "@repo/types";
 import { deviceRouter } from "./routes/device";
 import { captureRouter } from "./routes/capture";
 import { auth } from "./middleware/auth";
-import { ensureTmpDir } from "./lib/storage";
-
-await ensureTmpDir();
+import { startChunkWorker, stopChunkWorker } from "./worker";
 
 const app = new Hono();
 
@@ -57,8 +55,10 @@ app.onError((err, c) => {
 });
 
 const server = serve({ fetch: app.fetch, port: 8000 });
+await startChunkWorker();
 
 async function shutdown() {
+  await stopChunkWorker();
   server.close();
   await closeDb();
   process.exit(0);

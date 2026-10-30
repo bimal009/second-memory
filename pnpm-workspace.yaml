@@ -6,4 +6,5 @@ packages:
 allowBuilds:
   esbuild: false
   ffmpeg-static: false
+  msgpackr-extract: false
   unrs-resolver: true

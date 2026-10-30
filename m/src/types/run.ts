@@ -11,6 +11,16 @@ export type Run = {
   bookmarks: { seconds: number; label: string; memoryId: string }[];
   chunks: Chunk[]; localCopyUri?: string; ended: boolean;
 };
-export type PendingChunk = { id: string; runId: string; index: number; seconds: number; durationSec: number; location?: MemoryLocation };
+export type PendingChunk = {
+  id: string;
+  runId: string;
+  index: number;
+  seconds: number;
+  durationSec: number;
+  location?: MemoryLocation;
+  /** Local file path when a real recorder produced the chunk. */
+  uri?: string;
+  startedAt?: string;
+};
 export type RunReceipt = { runId: string; title: string; chunks: { id: string; files: number; sizeMb: number; audioSec: number; frames: number; rawDeleted: boolean }[] };
 export type QuestionHistory = { id: string; question: string; createdAt: string };

@@ -9,5 +9,5 @@ export default function Index() {
   }
   if (state === "needsOnboarding") return <Redirect href="/onboarding" />;
   if (state === "needsPermissions") return <Redirect href="/permissions" />;
-  return <Redirect href="/(tabs)/capture" />;
+  return <Redirect href="/capture" />;
 }
