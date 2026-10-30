@@ -3,7 +3,9 @@ import React, {
   useContext,
   type PropsWithChildren,
 } from "react";
-import { lightColors, type ThemeColors } from "@/theme/tokens";
+import { useColorScheme } from "react-native";
+import { lightColors, darkColors, type ThemeColors } from "@/theme/tokens";
+import { usePreferences } from "@/lib/preferences";
 import type { AppearanceMode } from "@/types";
 
 type ThemeContextValue = {
@@ -20,7 +22,10 @@ const lightTheme: ThemeContextValue = {
 };
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  return <ThemeCtx.Provider value={lightTheme}>{children}</ThemeCtx.Provider>;
+  const { settings } = usePreferences();
+  const system = useColorScheme();
+  const isDark = settings.appearance === "dark" || (settings.appearance === "system" && system === "dark");
+  return <ThemeCtx.Provider value={{ colors: isDark ? darkColors : lightColors, isDark, mode: settings.appearance }}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme(): ThemeContextValue {

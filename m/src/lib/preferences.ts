@@ -4,7 +4,7 @@ import type { AppSettings } from "@/types";
 const CACHE = "second-memory-preferences";
 let settings: AppSettings = {
   assistantName: "",
-  appearance: "light",
+  appearance: "system",
   alwaysOnIndicator: true,
   recordingPaused: false,
   bufferMinutes: 2,
@@ -20,18 +20,19 @@ let settings: AppSettings = {
   ],
 };
 const listeners = new Set<() => void>();
+export const getPreferences = () => settings;
 const emit = () => listeners.forEach((listener) => listener());
 let writeQueue = Promise.resolve();
 export async function hydratePreferences() {
   const cached = await AsyncStorage.getItem(CACHE);
   if (cached) {
     const value = JSON.parse(cached) as Partial<AppSettings>;
-    settings = { ...settings, ...value, appearance: "light", bufferMinutes: 2, defaultClipSeconds: 30, alwaysOnIndicator: true };
+    settings = { ...settings, ...value, alwaysOnIndicator: true };
     emit();
   }
 }
 export function updatePreferences(patch: Partial<AppSettings>) {
-  settings = { ...settings, ...patch, appearance: "light", bufferMinutes: 2, defaultClipSeconds: 30, alwaysOnIndicator: true };
+  settings = { ...settings, ...patch, alwaysOnIndicator: true };
   emit();
   const snapshot = JSON.stringify(settings);
   writeQueue = writeQueue

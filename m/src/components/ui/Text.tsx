@@ -18,7 +18,7 @@ export function Text({
   variant = "body",
   color,
   align,
-  maxFontSizeMultiplier = 1.4,
+  maxFontSizeMultiplier = 0,
   style,
   ...rest
 }: AppTextProps) {

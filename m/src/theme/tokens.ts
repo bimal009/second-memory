@@ -39,7 +39,7 @@ export const lightColors: ThemeColors = {
   secondary: "#F4F4F5",
   secondaryForeground: "#18181B",
   muted: "#F5F5F5",
-  mutedForeground: "#6B6B6B",
+  mutedForeground: "#737373",
   accent: "#F5F5F5",
   accentForeground: "#18181B",
   destructive: "#DC2626",
@@ -91,6 +91,8 @@ export const mediaColors = {
   captionFaint: "rgba(255,255,255,0.85)",
   hintFaint: "rgba(255,255,255,0.5)",
   sheetBorder: "rgba(255,255,255,0.1)",
+  strongScrim: "rgba(10,10,10,0.88)",
+  dimScrim: "rgba(0,0,0,0.8)",
 } as const;
 
 /** Highlight mask fill — semi-transparent lime over any frame. */
