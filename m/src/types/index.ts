@@ -98,6 +98,8 @@ export type ConnectedSource = {
 };
 
 export type AppSettings = {
+  keepLocalRecording?: boolean;
+  voiceReplies?: "off" | "earphones" | "always";
   assistantName: string;
   appearance: AppearanceMode;
   alwaysOnIndicator: boolean;

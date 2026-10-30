@@ -6,12 +6,23 @@ import type {
   MemoryFilterKey,
   TodayPayload,
 } from "@/types";
+import type { Session, Sighting, PrivacyReceipt } from "@/types/session";
 
 /**
  * The only data seam the UI knows about. Swap `src/api/mockClient.ts` for an
  * HTTP-backed implementation later — no screen or component changes required.
  */
 export interface SecondMemoryClient {
+  listSessions(): Promise<Session[]>;
+  getSession(id: string): Promise<Session | null>;
+  saveSession(seconds: number, bookmarks: number[], keepLocal: boolean): Promise<Session>;
+  deleteSession(id: string): Promise<void>;
+  createReminder(text: string): Promise<void>;
+  getSightings(memoryId: string): Promise<Sighting[]>;
+  getReceipts(): Promise<PrivacyReceipt[]>;
+  getExamples(): Promise<string[]>;
+  getLocation(): Promise<import("@/types").MemoryLocation>;
+  confirmChunk(index: number): Promise<void>;
   listMemories(params?: {
     query?: string;
     filter?: MemoryFilterKey;

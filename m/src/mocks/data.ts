@@ -24,6 +24,12 @@ const yesterdayAt = (h: number, m: number) => {
 
 export const mockMemories: Memory[] = [
   {
+    id: "memory-passport-bag", kind: "place", title: "Passport in the travel bag", summary: "Before it moved to the blue drawer, the passport was in the front pocket of the travel bag.",
+    transcript: "Passport is in the travel bag for now.", createdAt: yesterdayAt(17, 25), startedAtLabel: "5:25 PM", frameSeed: 19, tags: ["passport", "travel"],
+    location: { label: "Home · Bedroom", lat: 40.7413, lng: -73.9894 },
+    highlight: { objectLabel: "passport", mask: [{ x: 0.25, y: 0.3 }, { x: 0.6, y: 0.27 }, { x: 0.65, y: 0.7 }, { x: 0.28, y: 0.73 }] },
+  },
+  {
     id: "memory-passport-drawer",
     kind: "clip",
     title: "Passport goes in the blue drawer",
@@ -315,3 +321,12 @@ export const exampleQuestions = [
   "Where is my car parked?",
   "Why is my toolbox missing?",
 ] as const;
+
+export const mockSessions: import("@/types/session").Session[] = [{
+  id: "session-service", title: "A plan for the car", createdAt: todayAt(14, 0), durationSec: 1820, frameSeed: 72,
+  summary: "A service appointment, without the mental checklist. The routine inspection is complete; the garage will send an estimate before doing any extra work.",
+  actionItems: ["Review the written estimate on Friday", "Book the follow-up service next month", "Put the service receipt in the glovebox"],
+  bookmarks: [{ seconds: 320, label: "Estimate and timing" }, { seconds: 1240, label: "Next appointment" }],
+  chunks: ["The inspection is complete and the car is ready to collect.", "Keep the service receipt with the vehicle records.", "The garage will email the written estimate on Friday.", "Extra work needs approval before it starts.", "Ask for an itemized estimate, including parts and labor.", "The current tires can stay in use for now.", "Book a follow-up appointment next month.", "A morning appointment should take about an hour.", "Bring the service booklet next time.", "The pickup desk closes at six."].map((text, index) => ({ id: `chunk-${index}`, seconds: index * 180 + 40, text, frameSeed: 70 + index })),
+}];
+export const mockReceipts: import("@/types/session").PrivacyReceipt[] = mockMemories.slice(0, 6).map((memory, index) => ({ id: memory.id, title: memory.title, files: 2, sizeMb: 1.2 + index * 0.1, audioSec: 8 + index, frames: 3 + index, rawDeleted: true }));

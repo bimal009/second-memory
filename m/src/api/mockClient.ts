@@ -6,14 +6,17 @@ import type {
   Point,
 } from "@/types";
 import type { SecondMemoryClient } from "@/api/domainClient";
-import { exampleQuestions, mockMemories, mockRecap, mockReminders } from "@/mocks/data";
+import { exampleQuestions, mockMemories, mockRecap, mockReminders, mockSessions, mockReceipts } from "@/mocks/data";
+import { getPreviewState, mockDelay } from "./previewState";
+import { updatePreferences, getPreferences } from "@/lib/preferences";
 
 const MOCK_LATENCY_MS = 450;
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const delay = (_ms: number) => mockDelay();
 
 let memories: Memory[] = structuredClone(mockMemories);
 let reminders = structuredClone(mockReminders);
 let recap = structuredClone(mockRecap);
+let sessions = structuredClone(mockSessions);
 
 const defaultSettings: AppSettings = {
   assistantName: "",
@@ -147,9 +150,28 @@ function mockCapture(command: string): { plan: CapturePlan; savedMemory: Memory 
 }
 
 export const mockClient: SecondMemoryClient = {
+  async listSessions() { await mockDelay(); return getPreviewState() === "empty" ? [] : structuredClone(sessions); },
+  async getSession(id) { await mockDelay(); return structuredClone(sessions.find(s => s.id === id) ?? null); },
+  async saveSession(seconds, bookmarks, _keepLocal) {
+    await mockDelay();
+    const session = { ...structuredClone(mockSessions[0]), id: `session-${Date.now()}`, createdAt: new Date().toISOString(), durationSec: seconds, bookmarks: bookmarks.map(seconds => ({ seconds, label: "Bookmark" })) };
+    // TODO: attach a local URI only once a real local video exists. Never invent a playable recording.
+    sessions = [session, ...sessions]; return session;
+  },
+  async deleteSession(id) { await mockDelay(); sessions = sessions.filter(s => s.id !== id); },
+  async createReminder(text) { await mockDelay(); reminders = [{ id: `reminder-${Date.now()}`, text, timeLabel: "Today", done: false }, ...reminders]; },
+  async getSightings(id) {
+    await mockDelay(); const memory = memories.find(m => m.id === id);
+    return memories.filter(m => m.id === id || (memory?.tags.includes("passport") && m.tags.includes("passport")))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(m => ({ id: m.id, frameSeed: m.frameSeed, timeLabel: `${isToday(m.createdAt) ? "Today" : "Yesterday"} · ${m.startedAtLabel}`, location: m.location }));
+  },
+  async getReceipts() { await mockDelay(); return getPreviewState() === "empty" ? [] : structuredClone(mockReceipts.filter(r => memories.some(m => m.id === r.id))); },
+  async getExamples() { await mockDelay(); return [...exampleQuestions]; },
+  async getLocation() { await mockDelay(); return { label: "Home · Hallway", lat: 40.7412, lng: -73.9896 }; },
+  async confirmChunk(_index) { await mockDelay(); /* TODO: replace simulated upload acknowledgment. */ },
   async listMemories(params) {
     await delay(MOCK_LATENCY_MS);
-    let list = [...memories];
+    let list = getPreviewState() === "empty" ? [] : [...memories];
 
     const filter = params?.filter ?? "all";
     if (filter === "today") list = list.filter((m) => isToday(m.createdAt));
@@ -185,16 +207,18 @@ export const mockClient: SecondMemoryClient = {
   async deleteAllMemories() {
     await delay(MOCK_LATENCY_MS);
     memories = [];
+    sessions = []; reminders = []; recap = null as unknown as typeof recap;
   },
 
   async ask(question) {
     await delay(MOCK_LATENCY_MS + 250);
+    if (getPreviewState() === "empty" || !memories.length) return { kind: "not-found", suggestions: [...exampleQuestions] };
     return mockAsk(question);
   },
 
   async getToday() {
     await delay(MOCK_LATENCY_MS);
-    return { recap: recap, reminders: [...reminders] };
+    return getPreviewState() === "empty" ? { recap: null, reminders: [] } : { recap: recap, reminders: [...reminders] };
   },
 
   async setReminderDone(id, done) {
@@ -204,13 +228,14 @@ export const mockClient: SecondMemoryClient = {
 
   async getSettings() {
     await delay(100);
-    return structuredClone(settings);
+    return { ...structuredClone(settings), ...getPreferences() };
   },
 
   async updateSettings(patch) {
     await delay(100);
     settings = { ...settings, ...patch };
-    return structuredClone(settings);
+    await updatePreferences(patch);
+    return { ...structuredClone(settings), ...getPreferences() };
   },
 
   async sendCaptureCommand({ command }) {
