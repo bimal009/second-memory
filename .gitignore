@@ -68,4 +68,5 @@ service-account*.json
 # Local planning document
 /timeline.md
 /impl.md
+/PROGRESS.md
 /storage/
