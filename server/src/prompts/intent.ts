@@ -1,17 +1,9 @@
-// Intent router prompt (impl.md 3.2). The caller injects `now`/`tz` so
-// relative times ("tomorrow at 9") resolve correctly. Output must be a
-// strict CommandPlan JSON — nothing else.
 import { MAX_ACTIONS } from "@repo/types";
-
 export type IntentPromptInput = {
-  /** ISO timestamp of the moment the command was spoken. */
-  now: string;
-  /** IANA timezone of the user, e.g. "Asia/Kathmandu". */
-  tz: string;
+    now: string;
+    tz: string;
 };
-
-export const intentSystemPrompt = ({ now, tz }: IntentPromptInput): string =>
-  `
+export const intentSystemPrompt = ({ now, tz }: IntentPromptInput): string => `
 You are the intent router of a wearable memory assistant (a phone recording continuously, standing in for Meta AI glasses).
 The user speaks one spoken command. Transcribe incoherence is possible: ignore filler ("hey", "kindly", "uh") and transcribe artifacts.
 

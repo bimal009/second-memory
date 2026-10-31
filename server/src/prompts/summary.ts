@@ -1,7 +1,4 @@
-// Capture-end summary prompt (runs once per capture, on /end). All chunk
-// notes + transcripts -> strict JSON with summary / highlights / action items.
-export const summarySystemPrompt = (): string =>
-  `
+export const summarySystemPrompt = (): string => `
 You summarize one continuous first-person capture session (the phone stands in for Meta AI glasses).
 The user walked around recording; each line below is one chunk's one-sentence memory, in order.
 

@@ -16,58 +16,49 @@ import { BootstrapStatus } from "@/features/bootstrap/BootstrapStatus";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 import { lightColors } from "@/theme/tokens";
 import { registerDevice } from "@/lib/push";
-
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_800ExtraBold,
-  });
-
-  if (fontError) throw fontError;
-  if (!fontsLoaded) return null;
-
-  return (
-    <QueryClientProvider client={queryClient}>
+    const [fontsLoaded, fontError] = useFonts({
+        Inter_400Regular,
+        Inter_500Medium,
+        Inter_600SemiBold,
+        Inter_700Bold,
+        Inter_800ExtraBold,
+    });
+    if (fontError)
+        throw fontError;
+    if (!fontsLoaded)
+        return null;
+    return (<QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <ThemeProvider>
           <RootNavigator />
         </ThemeProvider>
       </SafeAreaProvider>
-    </QueryClientProvider>
-  );
+    </QueryClientProvider>);
 }
-
 function RootNavigator() {
-  const state = useBootstrap();
-
-  useEffect(() => {
-    if (state === "ready") void registerDevice();
-  }, [state]);
-
-  if (state === "loading" || state === "retry") {
-    return <BootstrapStatus failed={state === "retry"} />;
-  }
-
-  return (
-    <View style={styles.root}>
+    const state = useBootstrap();
+    useEffect(() => {
+        if (state === "ready")
+            void registerDevice();
+    }, [state]);
+    if (state === "loading" || state === "retry") {
+        return <BootstrapStatus failed={state === "retry"}/>;
+    }
+    return (<View style={styles.root}>
       <Stack screenOptions={{ headerShown: false, animation: "none" }}>
         <Stack.Protected guard={state === "needsOnboarding"}>
-          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="onboarding"/>
         </Stack.Protected>
         <Stack.Protected guard={state === "needsPermissions"}>
-          <Stack.Screen name="permissions" />
+          <Stack.Screen name="permissions"/>
         </Stack.Protected>
         <Stack.Protected guard={state === "ready"}>
-          <Stack.Screen name="capture" />
+          <Stack.Screen name="capture"/>
         </Stack.Protected>
       </Stack>
-    </View>
-  );
+    </View>);
 }
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#000" },
+    root: { flex: 1, backgroundColor: "#000" },
 });
