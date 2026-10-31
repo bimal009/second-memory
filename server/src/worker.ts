@@ -1,6 +1,6 @@
 import { DelayedError, Worker, type Job } from "bullmq";
 import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
-import { readdir, rm } from "node:fs/promises";
+import { readdir, rename, rm } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import sharp from "sharp";
 import phash from "sharp-phash";
@@ -88,6 +88,33 @@ async function understandChunk(input: UnderstandInput): Promise<"skipped" | "ok"
         };
     const embedding = await embed(understanding.note);
     await ensureDir(join(frameDir(chunk.captureId, chunk.idx), "thumbs"));
+    const blurred = new Set<number>();
+    if (process.env.FACE_BLUR !== "0") {
+        for (const box of understanding.face_boxes ?? []) {
+            const frame = frames[box.i];
+            if (!frame || blurred.has(box.i)) continue;
+            blurred.add(box.i);
+            try {
+                const meta = await sharp(frame.path).metadata();
+                const width = meta.width ?? 0;
+                const height = meta.height ?? 0;
+                const pad = 0.02;
+                const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+                const left = clamp(Math.round((box.x - pad) * width), 0, Math.max(0, width - 2));
+                const top = clamp(Math.round((box.y - pad) * height), 0, Math.max(0, height - 2));
+                const w = clamp(Math.round((box.w + 2 * pad) * width), 2, width - left);
+                const h = clamp(Math.round((box.h + 2 * pad) * height), 2, height - top);
+                const overlay = await sharp(await sharp(frame.path).blur(24).toBuffer())
+                    .extract({ left, top, width: w, height: h })
+                    .toBuffer();
+                await sharp(frame.path).composite([{ input: overlay, left, top }]).toFile(`${frame.path}.c`);
+                await rename(`${frame.path}.c`, frame.path);
+            }
+            catch (err) {
+                console.warn(`[worker] face blur failed on chunk ${chunk.id}: ${err instanceof Error ? err.message : err}`);
+            }
+        }
+    }
     const thumbs = await Promise.all(frames.map((f) => {
         const thumb = join(frameDir(chunk.captureId, chunk.idx), "thumbs", basename(f.path));
         return sharp(f.path)
@@ -182,7 +209,7 @@ async function understandChunk(input: UnderstandInput): Promise<"skipped" | "ok"
     });
     return "ok";
 }
-async function finalizeMoments(captureId: string, windowEndClamp: Date) {
+export async function finalizeMoments(captureId: string, windowEndClamp: Date) {
     const moments = await db.query.memories.findMany({
         where: { captureId, kind: "moment", status: "pending" },
         columns: {

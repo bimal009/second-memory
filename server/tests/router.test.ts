@@ -183,6 +183,7 @@ describe("router fast path + model path", () => {
             answer: "gate B",
             memory_id: null,
             frame: null,
+            highlight: null,
             lat: 27.7,
             lng: 85.3,
             last_seen_at: "2026-10-31T10:00:00.000Z",

@@ -3,6 +3,14 @@ export const askRequestSchema = z.object({
     question: z.string().min(1),
 });
 export type AskRequest = z.infer<typeof askRequestSchema>;
+export const askHighlightSchema = z.object({
+    x: z.number().min(0).max(1),
+    y: z.number().min(0).max(1),
+    w: z.number().min(0).max(1),
+    h: z.number().min(0).max(1),
+    approx: z.boolean(),
+});
+export type AskHighlight = z.infer<typeof askHighlightSchema>;
 export const askAnswerSchema = z.object({
     question: z.string(),
     known: z.boolean(),
@@ -15,6 +23,7 @@ export const askAnswerSchema = z.object({
         offset_ms: z.number().int().nullable(),
     })
         .nullable(),
+    highlight: askHighlightSchema.nullable(),
     lat: z.number().nullable(),
     lng: z.number().nullable(),
     last_seen_at: z.string().datetime({ offset: true }).nullable(),

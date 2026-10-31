@@ -66,6 +66,7 @@ describe("plan schemas", () => {
             answer: "last seen",
             memory_id: "00000000-0000-4000-8000-000000000002",
             frame: null,
+            highlight: null,
             lat: 27.7,
             lng: 85.3,
             last_seen_at: "2026-10-31T10:00:00+05:45",

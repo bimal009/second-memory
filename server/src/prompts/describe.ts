@@ -10,7 +10,8 @@ Return ONLY a JSON object of this exact shape:
   "note": "one sentence, past tense, third person ('The user parked the car.')",
   "tags": ["lowercase", "keywords"],
   "objects": ["lowercase", "nouns"],
-  "commitments": [{"text":"...","due_at":"ISO-8601 or null"}]
+  "commitments": [{"text":"...","due_at":"ISO-8601 or null"}],
+  "face_boxes": [{"i":0,"x":0.2,"y":0.1,"w":0.15,"h":0.25}]
 }
 
 Rules:
@@ -18,6 +19,7 @@ Rules:
 - "tags": 2-5 lowercase keywords for recall (place names, object types, activity).
 - "objects": only objects you can clearly see in the frames (passport, keys, laptop, car). List each object once. Wrong sightings are worse than missing ones — when unsure, leave it out. Never list people by name.
 - "commitments": promises or plans the user says out loud ("I'll send the file tomorrow", "let's meet at 5"). Extract text plus a resolved due time if the words state one; null when no time is stated. An empty array if none.
+- "face_boxes": every clearly visible face, as normalized boxes (x, y, w, h in 0..1, i = index of the frame it appears in, frames numbered 0,1,... in the order given). Empty array when no faces. If a face is small or only partially visible, include a slightly larger box so it is fully covered; do not mark anything else as a face.
 - Do not mention the camera, frames, or the recording. Do not speculate about things not visible or spoken.
 - Output raw JSON only: no markdown, no commentary.
 `.trim();

@@ -3,9 +3,10 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming, } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Flashlight, FlashlightOff, FlipHorizontal2, Images, X, } from "lucide-react-native";
+import { Flashlight, FlashlightOff, FlipHorizontal2, X, } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/constants/strings";
@@ -165,15 +166,9 @@ export function CaptureScreen() {
 
         <View style={styles.dock}>
           <SideSlot>
-            <View style={[
-            styles.memories,
-            {
-                borderColor: tint,
-                backgroundColor: mediaColors.buttonBg,
-            },
-        ]}>
-              <Images size={iconSize.md - 2} color={tint}/>
-            </View>
+            <Tool large tint={tint} onPress={() => router.push("/ask")} icon={
+              <Text variant="caption" style={{ color: onMedia }}>ASK</Text>
+            }/>
           </SideSlot>
 
           <Pressable accessibilityRole="button" accessibilityLabel={session.recording ? "Stop capture" : "Start capture"} disabled={session.busy} onPressIn={() => setShutterPressed(true)} onPressOut={() => setShutterPressed(false)} onPress={onShutter} style={styles.shutterHit}>
