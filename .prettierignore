@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+.expo
+android
+ios
+coverage
+storage
+*.lock
+pnpm-lock.yaml
+drizzle
+expo-env.d.ts

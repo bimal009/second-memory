@@ -41,11 +41,13 @@ export async function requestPermission(
       return Location.requestForegroundPermissionsAsync();
     case "notifications":
       if (Platform.OS === "android") {
-        const channel = await Notifications.getNotificationChannelAsync("default");
-        if (!channel) await Notifications.setNotificationChannelAsync("default", {
-          name: "Reminders",
-          importance: AndroidImportance.DEFAULT,
-        });
+        const channel =
+          await Notifications.getNotificationChannelAsync("default");
+        if (!channel)
+          await Notifications.setNotificationChannelAsync("default", {
+            name: "Reminders",
+            importance: AndroidImportance.DEFAULT,
+          });
       }
       return Notifications.requestPermissionsAsync();
   }

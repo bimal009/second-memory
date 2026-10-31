@@ -1,13 +1,21 @@
 import React from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { Text } from "@/components/ui/Text";
 import { limeDeep, mediaColors, radius } from "@/theme/tokens";
 import { spacing, touchTarget } from "@/theme/spacing";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "onMedia";
+export type ButtonVariant =
+  "primary" | "secondary" | "ghost" | "danger" | "onMedia";
 export type ButtonSize = "md" | "lg";
 
 export type ButtonProps = {
@@ -34,9 +42,16 @@ function resolveColors(
       return { bg: colors.secondary, fg: colors.secondaryForeground };
     case "ghost":
       // Lime text on white fails 4.5:1 — use deep lime instead.
-      return { bg: "transparent", fg: colors.isDark ? colors.primary : limeDeep };
+      return {
+        bg: "transparent",
+        fg: colors.isDark ? colors.primary : limeDeep,
+      };
     case "danger":
-      return { bg: "transparent", fg: colors.destructive, border: colors.destructive };
+      return {
+        bg: "transparent",
+        fg: colors.destructive,
+        border: colors.destructive,
+      };
     case "onMedia":
       return { bg: mediaColors.buttonBg, fg: mediaColors.foreground };
   }

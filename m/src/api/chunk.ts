@@ -54,10 +54,7 @@ export async function listChunks(captureId: string): Promise<Chunk[]> {
   return chunks ?? [];
 }
 
-export async function getChunk(
-  captureId: string,
-  idx: number,
-): Promise<Chunk> {
+export async function getChunk(captureId: string, idx: number): Promise<Chunk> {
   const { data: chunk } = await axiosInstance.get<Chunk>(
     `/captures/${captureId}/chunks/${idx}`,
   );

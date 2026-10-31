@@ -9,4 +9,5 @@ export * from "./sightings";
 export * from "./reminders";
 export * from "./daily-recaps";
 export * from "./model-calls";
+export * from "./router-commands";
 export * from "./views";

@@ -1,5 +1,9 @@
 import { axiosInstance } from "@/axios";
-import type { CreateDeviceSchema, Device, UpdateDeviceSchema } from "@repo/types";
+import type {
+  CreateDeviceSchema,
+  Device,
+  UpdateDeviceSchema,
+} from "@repo/types";
 
 export async function createDevice(data: CreateDeviceSchema): Promise<Device> {
   const { data: device } = await axiosInstance.post<Device>("/devices", data);

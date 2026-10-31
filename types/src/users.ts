@@ -3,7 +3,9 @@ import { apiResponse } from "./responses";
 
 export const userSchema = z.object({
   id: z.string().uuid(),
-  assistant_name: z.string().min(1).max(30),
+  assistant_name: z.string().regex(/^[A-Za-z]{2,12}$/, {
+    message: "one word, 2-12 letters",
+  }),
   timezone: z.string().default("UTC"),
   created_at: z.string(),
 });

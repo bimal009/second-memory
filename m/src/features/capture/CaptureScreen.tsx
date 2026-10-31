@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -142,7 +137,9 @@ export function CaptureScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: mediaColors.heroBackground }]}>
+    <View
+      style={[styles.root, { backgroundColor: mediaColors.heroBackground }]}
+    >
       <StatusBar style="light" />
       <CameraView
         ref={cameraRef}
@@ -185,7 +182,10 @@ export function CaptureScreen() {
                 ]}
               >
                 <View
-                  style={[styles.recDot, { backgroundColor: colors.destructive }]}
+                  style={[
+                    styles.recDot,
+                    { backgroundColor: colors.destructive },
+                  ]}
                 />
                 <Text variant="bodyMedium" style={{ color: onMedia }}>
                   {session.elapsedLabel}
@@ -205,9 +205,7 @@ export function CaptureScreen() {
               setFacing((f) => (f === "back" ? "front" : "back"));
               void Haptics.selectionAsync().catch(() => {});
             }}
-            icon={
-              <FlipHorizontal2 size={iconSize.md - 2} color={onMedia} />
-            }
+            icon={<FlipHorizontal2 size={iconSize.md - 2} color={onMedia} />}
           />
         </View>
 
@@ -236,10 +234,7 @@ export function CaptureScreen() {
         {session.error ? (
           <Pressable
             onPress={session.clearError}
-            style={[
-              styles.errorChip,
-              { backgroundColor: colors.destructive },
-            ]}
+            style={[styles.errorChip, { backgroundColor: colors.destructive }]}
           >
             <X size={iconSize.sm - 4} color={colors.destructiveForeground} />
             <Text
@@ -296,9 +291,7 @@ export function CaptureScreen() {
           >
             <Animated.View style={[styles.shutterRing, ringStyle]}>
               {session.busy ? (
-                <ActivityIndicator
-                  color={session.recording ? onMedia : tint}
-                />
+                <ActivityIndicator color={session.recording ? onMedia : tint} />
               ) : (
                 <Animated.View style={[styles.shutterInner, innerStyle]} />
               )}
@@ -313,9 +306,7 @@ export function CaptureScreen() {
                 setTorch(false);
                 setFacing((f) => (f === "back" ? "front" : "back"));
               }}
-              icon={
-                <FlipHorizontal2 size={iconSize.md} color={onMedia} />
-              }
+              icon={<FlipHorizontal2 size={iconSize.md} color={onMedia} />}
             />
           </SideSlot>
         </View>

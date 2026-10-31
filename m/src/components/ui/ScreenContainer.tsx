@@ -1,5 +1,10 @@
 import React, { type PropsWithChildren } from "react";
-import { StyleSheet, View, ScrollView, KeyboardAvoidingView } from "react-native";
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  KeyboardAvoidingView,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
@@ -33,7 +38,8 @@ export function ScreenContainer({
         styles.content,
         !noHorizontalPadding && styles.contentPad,
         {
-          paddingBottom: insets.bottom + (padBottom ? padBottom + 16 : spacing.xxl),
+          paddingBottom:
+            insets.bottom + (padBottom ? padBottom + 16 : spacing.xxl),
         },
       ]}
       keyboardShouldPersistTaps="handled"
@@ -42,12 +48,16 @@ export function ScreenContainer({
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.flex, !noHorizontalPadding && styles.contentPad]}>{children}</View>
+    <View style={[styles.flex, !noHorizontalPadding && styles.contentPad]}>
+      {children}
+    </View>
   );
 
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-      <View style={[styles.flex, { backgroundColor: bg, paddingTop: insets.top }]}>
+      <View
+        style={[styles.flex, { backgroundColor: bg, paddingTop: insets.top }]}
+      >
         {body}
       </View>
     </KeyboardAvoidingView>

@@ -1,4 +1,12 @@
 {
   "name": "second-memory",
-  "private": true
+  "private": true,
+    "scripts": {
+        "typecheck": "pnpm -r typecheck",
+        "test": "pnpm -r --if-present test",
+        "format": "prettier --write \"server/**/*.{ts,js,json,md}\" \"types/**/*.{ts,js,json,md}\" \"m/src/**/*.{ts,tsx,js,jsx,json}\" \"m/*.{js,json,md}\" \"package.json\" \"pnpm-workspace.yaml\""
+    },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
 }

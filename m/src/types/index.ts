@@ -41,7 +41,8 @@ export type Memory = {
   clipDurationSec?: number;
 };
 
-export type MemoryFilterKey = "all" | "today" | "places" | "clips" | "reminders" | "bookmarks";
+export type MemoryFilterKey =
+  "all" | "today" | "places" | "clips" | "reminders" | "bookmarks";
 
 /** What a voice command produced ("keep this", "add a note", …). */
 export type CapturePlan = {

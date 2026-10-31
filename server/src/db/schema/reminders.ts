@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { check, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  check,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { memories } from "./memories";
 import { users } from "./users";
 
@@ -25,7 +32,7 @@ export const reminders = pgTable(
   (table) => [
     check(
       "reminders_source_check",
-      sql`${table.source} IN ('voice', 'commitment')`,
+      sql`${table.source} IN ('voice', 'commitment', 'summary')`,
     ),
     check(
       "reminders_status_check",

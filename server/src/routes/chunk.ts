@@ -9,12 +9,7 @@ import {
 } from "@repo/types";
 import { db } from "../db/index";
 import { chunks } from "../db/schema";
-import {
-  audioPath,
-  chunkPath,
-  ensureChunkDir,
-  frameDir,
-} from "../lib/storage";
+import { audioPath, chunkPath, ensureChunkDir, frameDir } from "../lib/storage";
 import { chunkJobId, chunkQueue, enqueueChunk } from "../lib/queue";
 
 type Env = { Variables: { userId: string } };
@@ -50,7 +45,7 @@ chunksRouter.post("/", async (c) => {
       404,
     );
   }
-  if (capture.status !== "recording" && capture.status !== "processing") {
+  if (capture.status !== "recording" && capture.status !== "ending") {
     return c.json<ApiResponse<null>>(
       {
         status: 409,

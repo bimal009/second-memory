@@ -130,7 +130,7 @@ captureRouter.get("/:id", async (c) => {
 captureRouter.post("/:id/end", async (c) => {
   const [capture] = await db
     .update(captures)
-    .set({ endedAt: new Date(), status: "processing" })
+    .set({ endedAt: new Date(), status: "ending" })
     .where(
       and(
         eq(captures.id, c.req.param("id")),

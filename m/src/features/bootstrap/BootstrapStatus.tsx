@@ -19,7 +19,10 @@ export function BootstrapStatus({ failed }: { failed: boolean }) {
             <Button label="Retry" onPress={() => void restartBootstrap()} />
           </>
         ) : (
-          <ActivityIndicator accessibilityLabel="Loading" color={colors.primary} />
+          <ActivityIndicator
+            accessibilityLabel="Loading"
+            color={colors.primary}
+          />
         )}
       </View>
     </ScreenContainer>

@@ -6,9 +6,11 @@ export type CaptureSource = z.infer<typeof captureSource>;
 
 export const captureStatus = z.enum([
   "recording",
+  "ending",
   "processing",
   "ready",
   "failed",
+  "deleting",
 ]);
 export type CaptureStatus = z.infer<typeof captureStatus>;
 

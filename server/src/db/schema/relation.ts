@@ -10,6 +10,7 @@ export const relations = defineRelations(schema, (r) => ({
     reminders: r.many.reminders(),
     dailyRecaps: r.many.dailyRecaps(),
     modelCalls: r.many.modelCalls(),
+    routerCommands: r.many.routerCommands(),
   },
   devices: {
     user: r.one.users({
@@ -128,6 +129,13 @@ export const relations = defineRelations(schema, (r) => ({
     capture: r.one.captures({
       from: r.modelCalls.captureId,
       to: r.captures.id,
+    }),
+  },
+  routerCommands: {
+    user: r.one.users({
+      from: r.routerCommands.userId,
+      to: r.users.id,
+      optional: false,
     }),
   },
 }));

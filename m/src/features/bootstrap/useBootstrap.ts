@@ -6,11 +6,7 @@ import { hydratePreferences, updatePreferences } from "@/lib/preferences";
 import { readPermissions, requiredGranted } from "@/lib/permissions";
 
 export type BootstrapState =
-  | "loading"
-  | "retry"
-  | "needsOnboarding"
-  | "needsPermissions"
-  | "ready";
+  "loading" | "retry" | "needsOnboarding" | "needsPermissions" | "ready";
 
 async function bootstrap(): Promise<
   "needsOnboarding" | "needsPermissions" | "ready"

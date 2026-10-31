@@ -2,7 +2,14 @@ import { DelayedError, Worker, type Job } from "bullmq";
 import { and, eq } from "drizzle-orm";
 import { rm } from "node:fs/promises";
 import { basename, join } from "node:path";
-import { FRAME_EVERY_S, ORDER_RECHECK_S, ORDER_WAIT_S } from "@repo/types";
+import {
+  chunkRowSchema,
+  FRAME_EVERY_S,
+  ORDER_RECHECK_S,
+  ORDER_WAIT_S,
+  type ChunkRow,
+  type ChunkStatus,
+} from "@repo/types";
 import { db } from "./db/index";
 import { chunks } from "./db/schema";
 import { redis } from "./lib/redis";
@@ -15,9 +22,6 @@ import {
   getMediaInfo,
   keepFrames,
 } from "./services/ffmpeg";
-import type { ChunkStatus } from "@repo/types";
-
-type ChunkRow = typeof chunks.$inferSelect;
 
 const TERMINAL = new Set<ChunkStatus>(["processed", "skipped", "failed"]);
 
@@ -41,6 +45,15 @@ async function cleanupRaw(captureId: string, idx: number) {
     .update(chunks)
     .set({ rawDeletedAt: new Date() })
     .where(and(eq(chunks.captureId, captureId), eq(chunks.idx, idx)));
+}
+
+/** The capture was deleted (or is mid-delete): never recreate files for it. */
+async function captureOpen(captureId: string): Promise<boolean> {
+  const capture = await db.query.captures.findFirst({
+    where: { id: captureId },
+    columns: { status: true },
+  });
+  return !!capture && capture.status !== "deleting";
 }
 
 async function runPipeline(row: ChunkRow): Promise<number> {
@@ -98,13 +111,24 @@ async function runPipeline(row: ChunkRow): Promise<number> {
 async function processor(job: Job<ChunkJobData>, token?: string) {
   const { captureId, chunkIdx } = job.data;
 
-  const [row] = await db
+  const [selected] = await db
     .select()
     .from(chunks)
     .where(and(eq(chunks.captureId, captureId), eq(chunks.idx, chunkIdx)))
     .limit(1);
 
-  if (!row || TERMINAL.has(row.status as ChunkStatus)) return { skipped: true };
+  if (!selected) return { skipped: true };
+
+  // Zod boundary: the DB row is validated before any processing (Rule 5).
+  const parsed = chunkRowSchema.safeParse(selected);
+  if (!parsed.success || TERMINAL.has(parsed.data.status)) {
+    return { skipped: true };
+  }
+  const row = parsed.data;
+
+  // Re-check: a capture deleted (or mid-delete) while its job sat in the
+  // queue must not be processed or recreated.
+  if (!(await captureOpen(captureId))) return { skipped: true };
 
   if (chunkIdx > 0) {
     const [prev] = await db
@@ -115,7 +139,6 @@ async function processor(job: Job<ChunkJobData>, token?: string) {
 
     const prevDone = !!prev && TERMINAL.has(prev.status as ChunkStatus);
     const waitedS = (Date.now() - row.createdAt.getTime()) / 1000;
-
     if (!prevDone && waitedS < ORDER_WAIT_S) {
       await job.moveToDelayed(Date.now() + ORDER_RECHECK_S * 1000, token);
       throw new DelayedError();
@@ -141,6 +164,10 @@ async function processor(job: Job<ChunkJobData>, token?: string) {
     // await cleanupRaw(captureId, chunkIdx); TODO:META API CALLS AND THEN CLEANUP RAW
     return { framesKept };
   } catch (err) {
+    // Deleted mid-processing: the cascade removed the row; skip quietly,
+    // never mark the chunk failed or touch its storage again.
+    if (!(await captureOpen(captureId))) return { skipped: true };
+
     const message = err instanceof Error ? err.message : String(err);
     const isLastAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
 

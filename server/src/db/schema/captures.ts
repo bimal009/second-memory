@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { check, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  check,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const captures = pgTable(
@@ -25,7 +32,7 @@ export const captures = pgTable(
     ),
     check(
       "captures_status_check",
-      sql`${table.status} IN ('recording', 'processing', 'ready', 'failed')`,
+      sql`${table.status} IN ('recording', 'ending', 'processing', 'ready', 'failed', 'deleting')`,
     ),
     index("captures_user_created_idx").on(table.userId, table.createdAt.desc()),
     index("captures_open_idx")

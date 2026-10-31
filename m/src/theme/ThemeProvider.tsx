@@ -19,8 +19,20 @@ const ThemeCtx = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({ children }: PropsWithChildren) {
   const { settings } = usePreferences();
   const system = useColorScheme();
-  const isDark = settings.appearance === "dark" || (settings.appearance === "system" && system === "dark");
-  return <ThemeCtx.Provider value={{ colors: isDark ? darkColors : lightColors, isDark, mode: settings.appearance }}>{children}</ThemeCtx.Provider>;
+  const isDark =
+    settings.appearance === "dark" ||
+    (settings.appearance === "system" && system === "dark");
+  return (
+    <ThemeCtx.Provider
+      value={{
+        colors: isDark ? darkColors : lightColors,
+        isDark,
+        mode: settings.appearance,
+      }}
+    >
+      {children}
+    </ThemeCtx.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {

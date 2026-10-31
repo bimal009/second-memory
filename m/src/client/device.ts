@@ -27,13 +27,8 @@ export function useCreateDevice() {
 export function useUpdateDevice() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: UpdateDeviceSchema;
-    }) => updateDevice(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateDeviceSchema }) =>
+      updateDevice(id, data),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ["devices"] });
     },

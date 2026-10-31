@@ -72,7 +72,13 @@ export const transcribe = async (wavPath: string): Promise<string> => {
   form.append(
     "request",
     new Blob(
-      [JSON.stringify({ model: SPEECH_MODEL, audioEncoding: "WAV", mode: "PUSH_TO_TALK" })],
+      [
+        JSON.stringify({
+          model: SPEECH_MODEL,
+          audioEncoding: "WAV",
+          mode: "PUSH_TO_TALK",
+        }),
+      ],
       { type: "application/json" },
     ),
   );

@@ -40,7 +40,10 @@ export const memories = pgTable(
     note: text("note").notNull(),
     description: text("description"),
     transcript: text("transcript"),
-    tags: text("tags").array().notNull().default(sql`'{}'`),
+    tags: text("tags")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     embedding: vector("embedding", { dimensions: 384 }),

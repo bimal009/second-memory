@@ -53,6 +53,30 @@ export const chunkSchema = z.object({
 });
 export type Chunk = z.infer<typeof chunkSchema>;
 
+/**
+ * A chunk row as the database returns it (server-side snake_case names,
+ * Date objects for timestamps). Mirrors the drizzle `chunks` table; use for
+ * worker/router code that passes rows around. Zod-parsed at boundaries.
+ */
+export const chunkRowSchema = z.object({
+  id: z.string().uuid(),
+  captureId: z.string().uuid(),
+  idx: z.number().int().min(0),
+  startedAt: z.date(),
+  durationS: z.number(),
+  lat: z.number().min(-90).max(90).nullable(),
+  lng: z.number().min(-180).max(180).nullable(),
+  accuracyM: z.number().nullable(),
+  status: chunkStatus,
+  error: z.string().nullable(),
+  uploadBytes: z.number().int().nonnegative(),
+  framesKept: z.number().int(),
+  rawDeletedAt: z.date().nullable(),
+  createdAt: z.date(),
+  processedAt: z.date().nullable(),
+});
+export type ChunkRow = z.infer<typeof chunkRowSchema>;
+
 export const createChunkSchema = z
   .object({
     idx: z.coerce.number().int().min(0),

@@ -9,7 +9,8 @@ export async function registerDevice() {
     if (Platform.OS !== "android" && Platform.OS !== "ios") return;
     if (!(await Notifications.getPermissionsAsync()).granted) return;
     const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
     if (!projectId) return;
     const token = await Notifications.getExpoPushTokenAsync({ projectId });
     const data: CreateDeviceSchema = {

@@ -15,7 +15,7 @@ export const users = pgTable(
   (table) => [
     check(
       "users_assistant_name_len",
-      sql`char_length(${table.assistantName}) BETWEEN 1 AND 30`,
+      sql`${table.assistantName} ~ '^[A-Za-z]{2,12}$'`,
     ),
   ],
 );

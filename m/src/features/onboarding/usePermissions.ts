@@ -34,9 +34,11 @@ export function usePermissions() {
           try {
             await requestPermission(k);
           } catch {
-            setError(k === "notifications"
-              ? "Notifications are unavailable right now. You can continue without them and try again later."
-              : "Could not request permission. Please try again or open phone settings.");
+            setError(
+              k === "notifications"
+                ? "Notifications are unavailable right now. You can continue without them and try again later."
+                : "Could not request permission. Please try again or open phone settings.",
+            );
           }
         }
       }

@@ -20,7 +20,8 @@ type QueuedChunk = CreateChunkSchema & {
 };
 
 /** Local UI phase; server capture.status is CaptureStatus once created. */
-type SessionPhase = "idle" | "starting" | Extract<CaptureStatus, "recording"> | "stopping";
+type SessionPhase =
+  "idle" | "starting" | Extract<CaptureStatus, "recording"> | "stopping";
 
 function clock(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -28,7 +29,9 @@ function clock(seconds: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function useCaptureSession(cameraRef: React.RefObject<CameraView | null>) {
+export function useCaptureSession(
+  cameraRef: React.RefObject<CameraView | null>,
+) {
   const [phase, setPhase] = useState<SessionPhase>("idle");
   const [capture, setCapture] = useState<Capture | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -166,7 +169,10 @@ export function useCaptureSession(cameraRef: React.RefObject<CameraView | null>)
             duration_s,
           });
         } catch {
-          if (loopGen.current !== generation || phaseRef.current !== "recording") {
+          if (
+            loopGen.current !== generation ||
+            phaseRef.current !== "recording"
+          ) {
             break;
           }
           setError("Recording hiccup — retrying");

@@ -5,7 +5,8 @@ export type DescribePromptInput = {
   transcript: string;
 };
 
-export const describeSystemPrompt = (): string => `
+export const describeSystemPrompt = (): string =>
+  `
 You condense one chunk of a continuous, first-person wearable capture (the phone stands in for Meta AI glasses).
 You receive the user's spoken words in this chunk (may be empty) and up to 8 sampled frames (one every 4 seconds, so frames alone skip visually identical moments — do not read anything into sampling gaps).
 
