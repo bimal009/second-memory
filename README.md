@@ -12,7 +12,7 @@ everything, in one tap.
 
 ## What it calls on Meta's side
 
-Everything runs through the Meta Model API, kept to one call per job:
+Everything runs through the Meta Model API, one model call per step, never repeated on retries:
 
 | Job | Call |
 |---|---|

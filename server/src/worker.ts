@@ -70,7 +70,18 @@ async function previousFirstFrameHash(captureId: string, idx: number): Promise<s
 }
 async function understandChunk(input: UnderstandInput): Promise<"skipped" | "ok"> {
     const { chunk, userId, frames, audioPath: wav } = input;
-    const transcript = wav ? (await transcribe(wav)).trim() : "";
+    const [saved] = await db
+        .select({ transcript: chunks.transcript })
+        .from(chunks)
+        .where(eq(chunks.id, chunk.id));
+    let transcript = saved?.transcript ?? "";
+    if (wav && saved?.transcript === null) {
+        transcript = (await transcribe(wav)).trim();
+        await db
+            .update(chunks)
+            .set({ transcript })
+            .where(eq(chunks.id, chunk.id));
+    }
     if (transcript.length === 0 && frames.length > 0) {
         const prevHash = await previousFirstFrameHash(chunk.captureId, chunk.idx);
         if (prevHash) {

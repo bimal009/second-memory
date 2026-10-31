@@ -14,6 +14,7 @@ export const chunks = pgTable("chunks", {
     accuracyM: real("accuracy_m"),
     status: text("status").notNull().default("uploaded"),
     error: text("error"),
+    transcript: text("transcript"),
     uploadBytes: bigint("upload_bytes", { mode: "number" })
         .notNull()
         .default(0),
