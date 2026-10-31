@@ -7,6 +7,7 @@ import { db } from "../db/index";
 import { memories, objects, reminders, routerCommands } from "../db/schema";
 import { intentPlan, transcribe } from "../lib/meta";
 import { convertMono } from "../services/ffmpeg";
+import { answerAsk } from "../lib/ask";
 type Env = {
     Variables: {
         userId: string;
@@ -172,7 +173,8 @@ async function runAction(action: CapturePlan, ctx: ActionContext): Promise<Execu
             return { intent: "control", command: action.command, error: null };
         }
         if (action.intent === "ask") {
-            return { intent: "ask", answer: null, error: "ask answering lands in the ask phase" };
+            const answer = await answerAsk(ctx.userId, action.question);
+            return { intent: "ask", answer, error: null };
         }
         if (action.intent === "bookmark") {
             if (!ctx.captureId) {

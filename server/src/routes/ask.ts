@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-import { type ApiResponse, askRequestSchema } from "@repo/types";
-type Env = {
-    Variables: {
-        userId: string;
-    };
-};
+import { type ApiResponse, type AskAnswer, askRequestSchema } from "@repo/types";
+import { answerAsk } from "../lib/ask";
+
+type Env = { Variables: { userId: string } };
+
 export const askRouter = new Hono<Env>();
+
 askRouter.post("/", async (c) => {
     const parsed = askRequestSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) {
@@ -16,13 +16,13 @@ askRouter.post("/", async (c) => {
             error: { code: "INVALID_BODY", message: parsed.error.message },
         }, 400);
     }
-    return c.json<ApiResponse<null>>({
-        status: 501,
-        message: "Not implemented",
-        data: null,
-        error: {
-            code: "NOT_IMPLEMENTED",
-            message: "ask answering lands in the ask phase",
-        },
-    }, 501);
+
+    const answer: AskAnswer = await answerAsk(c.get("userId"), parsed.data.question);
+
+    return c.json<ApiResponse<AskAnswer>>({
+        status: 200,
+        message: "OK",
+        data: answer,
+        error: null,
+    });
 });

@@ -121,7 +121,7 @@ memoriesRouter.get("/", async (c) => {
     });
 });
 memoriesRouter.get("/:id", async (c) => {
-    const parsed = idParamSchema.safeParse(c.req.param("id"));
+    const parsed = idParamSchema.safeParse({ id: c.req.param("id") });
     if (!parsed.success) {
         return c.json<ApiResponse<null>>({
             status: 400,

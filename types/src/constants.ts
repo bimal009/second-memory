@@ -25,3 +25,5 @@ export const WAKE_PREFIX_WORDS = ["hey", "ok", "hi"];
 export const THUMB_WIDTH = 320;
 export const ORDER_WAIT_S = 180;
 export const ORDER_RECHECK_S = 3;
+export const ASK_COSINE_DISTANCE_MAX = 0.5;
+export const ASK_USUALLY_MIN_SIGHTINGS = 3;
