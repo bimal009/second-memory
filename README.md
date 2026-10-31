@@ -68,61 +68,40 @@ pnpm --filter server exec tsx scripts/ask-eval.ts
 ## Flow
 
 ```text
-                     Phone (Expo app)
-                           |
-                  Camera + Mic capture
-                           |
-                  30s chunk recorder loop
-                  (pause / resume buttons)
-                           |
-                    local upload queue
-                           |
-       POST /captures/:id/chunks (idempotent, lat/lng)
-                           |
-                       Redis queues
-                           |
-       +-------------------+-------------------+
-       |                                         |
-  Chunk worker (ordered)                   Capture end
-       |                                         |
-  ffmpeg sampling                          Muse Spark 1.3
-       |                                   summary + items
- +-------------+-------------+                    |
- |             |             |             daily recap
- frames      phash        mono WAV        reminders + push
- |             |             |
- dedupe        |       Voice Transcribe
-  \            |            /
-   \           |           /
-    Muse Spark 1.3: one vision call per chunk
-    note, tags, objects, commitments, face boxes
-                 |
-        sharp: blur detected faces
-                 |
-          one transaction write
-   memory + frames + thumbs + sightings + reminders
-                 |
-      raw video and audio deleted right after
+Phone (Expo app)
+  |
+30s chunks, camera + mic (pause / resume)
+  |
+POST /captures/:id/chunks (idempotent, lat/lng)
+  |
+Redis queues (BullMQ)
+  |
+Chunk worker, one chunk at a time, in order
+  |
++-------------+-------------+
+|             |             |
+ffmpeg       Voice          Muse Spark 1.3
+frames       Transcribe     note/tags/objects
+|             |             |
++-------------+-------------+
+  |
+phash dedupe, face blur by sharp
+  |
+One write: memory, frames, thumbs, sightings, reminders
+  |
+Raw video and audio deleted
 
-
-User question
-     |
- tracked object asked about?
-     |                            |
-    yes                           no
-     |                            |
- latest sighting plus        pgvector top-k
- usually-here rule           plus full-text top-k
-     |                            |
-     |                    reciprocal rank fusion
-     |                            |
-     |                   grounded Muse answer
-     |               (or honest "no memory of that")
-      \                          /
-    frame citation + SAM 3.1 subject box
-    (approx fallback: Spark-drawn box)
-                 |
- answer + highlight, spoken via expo-speech
+Ask later
+  |
+Tracked object? yes: latest sighting + usually-here
+  | no
+pgvector top-k + full-text top-k -> rank fusion
+  |
+Grounded Muse answer (or "no memory of that")
+  |
+Frame citation + SAM 3.1 subject box
+  |
+Spoken reply (expo-speech)
 ```
 
 ## Trying it
