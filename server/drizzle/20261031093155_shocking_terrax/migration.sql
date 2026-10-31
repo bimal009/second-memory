@@ -1,0 +1,1 @@
+ALTER TABLE "reminders" DROP CONSTRAINT "reminders_source_check", ADD CONSTRAINT "reminders_source_check" CHECK ("source" IN ('voice', 'commitment', 'summary', 'nudge'));

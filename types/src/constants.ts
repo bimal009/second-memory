@@ -27,3 +27,5 @@ export const ORDER_WAIT_S = 180;
 export const ORDER_RECHECK_S = 3;
 export const ASK_COSINE_DISTANCE_MAX = 0.5;
 export const ASK_USUALLY_MIN_SIGHTINGS = 3;
+export const ASK_RRF_K = 60;
+export const ASK_TOP_K = 3;

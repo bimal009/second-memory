@@ -1,11 +1,11 @@
 import { DelayedError, Worker, type Job } from "bullmq";
-import { and, eq, inArray, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
 import { readdir, rm } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import sharp from "sharp";
 import phash from "sharp-phash";
 import distance from "sharp-phash/distance";
-import { CHUNK_DURATION_S, chunkUnderstandingSchema, chunkRowSchema, captureSummarySchema, FRAME_EVERY_S, ORDER_RECHECK_S, ORDER_WAIT_S, PHASH_MIN_DISTANCE, RUN_IDLE_END_S, STUCK_PROCESSING_S, SWEEP_INTERVAL_S, THUMB_WIDTH, type ChunkRow, type ChunkStatus, type ChunkUnderstanding, type CaptureSummary, } from "@repo/types";
+import { CHUNK_DURATION_S, chunkUnderstandingSchema, chunkRowSchema, captureSummarySchema, FRAME_EVERY_S, NUDGE_COOLDOWN_S, NUDGE_MIN_AGE_S, NUDGE_RADIUS_M, ORDER_RECHECK_S, ORDER_WAIT_S, PHASH_MIN_DISTANCE, RUN_IDLE_END_S, STUCK_PROCESSING_S, SWEEP_INTERVAL_S, THUMB_WIDTH, type ChunkRow, type ChunkStatus, type ChunkUnderstanding, type CaptureSummary, } from "@repo/types";
 import { db } from "./db/index";
 import { captures, chunks, dailyRecaps, memories, media, objects, reminders, sightings, } from "./db/schema";
 import { redis } from "./lib/redis";
@@ -67,24 +67,6 @@ async function previousFirstFrameHash(captureId: string, idx: number): Promise<s
         return null;
     }
 }
-async function understandWithRetry(transcript: string, frames: {
-    path: string;
-    offsetS: number;
-}[]): Promise<ChunkUnderstanding> {
-    let retryHint = "";
-    for (let attempt = 0; attempt < 2; attempt++) {
-        const raw = await describeChunk(retryHint
-            ? `${transcript}\n\nThat was not valid JSON (${retryHint}). Return ONLY the JSON object.`
-            : transcript, frames.map((f) => f.path));
-        try {
-            return parseModelJson(raw, chunkUnderstandingSchema);
-        }
-        catch (err) {
-            retryHint = (err instanceof Error ? err.message : String(err)).slice(0, 300);
-        }
-    }
-    throw new Error(retryHint);
-}
 async function understandChunk(input: UnderstandInput): Promise<"skipped" | "ok"> {
     const { chunk, userId, frames, audioPath: wav } = input;
     const transcript = wav ? (await transcribe(wav)).trim() : "";
@@ -96,26 +78,14 @@ async function understandChunk(input: UnderstandInput): Promise<"skipped" | "ok"
                 return "skipped";
         }
     }
-    let understanding: ChunkUnderstanding;
-    try {
-        understanding =
-            frames.length > 0
-                ? await understandWithRetry(transcript, frames)
-                : {
-                    note: transcript || "A segment with no extractable frames.",
-                    tags: [],
-                    objects: [],
-                    commitments: [],
-                };
-    }
-    catch {
-        understanding = {
-            note: transcript || "Unlabeled segment.",
+    const understanding: ChunkUnderstanding = frames.length > 0
+        ? parseModelJson(await describeChunk(transcript, frames.map((f) => f.path)), chunkUnderstandingSchema)
+        : {
+            note: transcript || "A segment with no extractable frames.",
             tags: [],
             objects: [],
             commitments: [],
         };
-    }
     const embedding = await embed(understanding.note);
     await ensureDir(join(frameDir(chunk.captureId, chunk.idx), "thumbs"));
     const thumbs = await Promise.all(frames.map((f) => {
@@ -521,32 +491,7 @@ async function summarizeProcessor(job: Job<SummaryJobData>, token?: string) {
             "Chunks, in order:",
             ...notes.map((n) => `- ${n.at.toISOString()}: ${n.note}`),
         ].join("\n");
-        summary = {
-            summary: "",
-            highlights: [],
-            action_items: [],
-        };
-        let retryHint = "";
-        for (let attempt = 0; attempt < 2; attempt++) {
-            const raw = await summarizeCapture(retryHint
-                ? `${content}\n\nThat was not valid JSON (${retryHint}). Return ONLY the JSON object.`
-                : content);
-            try {
-                summary = parseModelJson(raw, captureSummarySchema);
-                retryHint = "";
-                break;
-            }
-            catch (err) {
-                retryHint = (err instanceof Error ? err.message : String(err)).slice(0, 300);
-            }
-        }
-        if (retryHint) {
-            summary = {
-                summary: notes.map((n) => n.note).join(" "),
-                highlights: [],
-                action_items: [],
-            };
-        }
+        summary = parseModelJson(await summarizeCapture(content), captureSummarySchema);
     }
     await db.transaction(async (tx) => {
         const startedAt = capture.createdAt;
@@ -630,6 +575,60 @@ export async function sweepOnce() {
         console.warn(`[worker] capture ${capture.id} idle -> auto-ended`);
     }
 }
+
+function distanceM(la1: number, lo1: number, la2: number, lo2: number): number {
+    const rad = Math.PI / 180;
+    const dLat = (la2 - la1) * rad;
+    const dLng = (lo2 - lo1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(la1 * rad) * Math.cos(la2 * rad) * Math.sin(dLng / 2) ** 2;
+    return 6371000 * 2 * Math.asin(Math.sqrt(a));
+}
+
+export async function sweepNudges() {
+    const tracked = await db.query.objects.findMany({
+        where: { tracked: true },
+        columns: { id: true, userId: true, label: true, lastNudgedAt: true },
+        with: {
+            sightings: {
+                orderBy: { seenAt: "desc" },
+                limit: 1,
+                columns: { seenAt: true },
+                with: { memory: { columns: { lat: true, lng: true, occurredAt: true } } },
+            },
+        },
+    });
+    for (const object of tracked) {
+        if (object.lastNudgedAt && object.lastNudgedAt.getTime() > Date.now() - NUDGE_COOLDOWN_S * 1000)
+            continue;
+        const sighting = object.sightings[0];
+        if (!sighting?.memory.lat || !sighting.memory.lng)
+            continue;
+        if (sighting.seenAt.getTime() > Date.now() - NUDGE_MIN_AGE_S * 1000)
+            continue;
+        const where = await db
+            .select({ lat: memories.lat, lng: memories.lng })
+            .from(memories)
+            .where(and(eq(memories.userId, object.userId), eq(memories.status, "ready"), isNotNull(memories.lat)))
+            .orderBy(desc(memories.occurredAt))
+            .limit(1);
+        const spot = where[0];
+        if (!spot)
+            continue;
+        if (distanceM(sighting.memory.lat, sighting.memory.lng, spot.lat!, spot.lng!) <= NUDGE_RADIUS_M)
+            continue;
+        await db.insert(reminders).values({
+            userId: object.userId,
+            source: "nudge",
+            text: `Looks like you left your ${object.label} behind.`,
+            dueAt: new Date(),
+        });
+        await db
+            .update(objects)
+            .set({ lastNudgedAt: new Date() })
+            .where(eq(objects.id, object.id));
+        console.log(`[worker] nudge: ${object.label} for user ${object.userId}`);
+    }
+}
 let sweepInterval: NodeJS.Timeout | null = null;
 let chunkWorker: Worker<ChunkJobData> | null = null;
 let summaryWorker: Worker<SummaryJobData> | null = null;
@@ -659,6 +658,7 @@ export function startSweeps() {
         return;
     sweepInterval = setInterval(() => {
         void sweepOnce().catch((err) => console.error("[sweep] error", err));
+        void sweepNudges().catch((err) => console.error("[nudge] error", err));
     }, SWEEP_INTERVAL_S * 1000);
     sweepInterval.unref?.();
 }

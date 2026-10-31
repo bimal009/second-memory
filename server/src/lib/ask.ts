@@ -1,6 +1,8 @@
-import { and, cosineDistance, eq, isNotNull } from "drizzle-orm";
+import { and, cosineDistance, eq, isNotNull, sql } from "drizzle-orm";
 import {
   ASK_COSINE_DISTANCE_MAX,
+  ASK_RRF_K,
+  ASK_TOP_K,
   ASK_USUALLY_MIN_SIGHTINGS,
   type AskAnswer,
 } from "@repo/types";
@@ -65,25 +67,55 @@ async function objectAnswer(userId: string, question: string): Promise<AskAnswer
   };
 }
 
-type VectorHit = { id: string; note: string; occurredAt: Date; distance: number };
+type Hit = { id: string; note: string; occurredAt: Date };
 
-async function vectorSearch(userId: string, question: string): Promise<VectorHit[]> {
+export async function hybridSearch(
+  userId: string,
+  question: string,
+): Promise<(Hit & { score: number })[]> {
   const embedding = await embed(question);
   const distance = cosineDistance(memories.embedding, embedding);
-  const rows = await db
-    .select({
-      id: memories.id,
-      note: memories.note,
-      occurredAt: memories.occurredAt,
-      distance,
-    })
-    .from(memories)
-    .where(
-      and(eq(memories.userId, userId), eq(memories.status, "ready"), isNotNull(memories.embedding)),
-    )
-    .orderBy(distance)
-    .limit(3);
-  return rows.map((r) => ({ ...r, distance: Number(r.distance) }));
+  const [vec, lex] = await Promise.all([
+    db
+      .select({ id: memories.id, note: memories.note, occurredAt: memories.occurredAt, distance })
+      .from(memories)
+      .where(
+        and(
+          eq(memories.userId, userId),
+          eq(memories.status, "ready"),
+          isNotNull(memories.embedding),
+        ),
+      )
+      .orderBy(distance)
+      .limit(ASK_TOP_K),
+    db
+      .select({ id: memories.id, note: memories.note, occurredAt: memories.occurredAt })
+      .from(memories)
+      .where(
+        and(
+          eq(memories.userId, userId),
+          eq(memories.status, "ready"),
+          sql`${memories.search} @@ plainto_tsquery('english', ${question})`,
+        ),
+      )
+      .orderBy(sql`ts_rank(${memories.search}, plainto_tsquery('english', ${question})) desc`)
+      .limit(ASK_TOP_K),
+  ]);
+
+  const retrieval = vec.filter((h) => Number(h.distance) <= ASK_COSINE_DISTANCE_MAX);
+  if (retrieval.length === 0 && lex.length === 0) return [];
+
+  const scores = new Map<string, { hit: Hit; score: number }>();
+  for (const list of [retrieval, lex]) {
+    list.forEach((hit, i) => {
+      const cur = scores.get(hit.id) ?? { hit, score: 0 };
+      cur.score += 1 / (ASK_RRF_K + i + 1);
+      scores.set(hit.id, cur);
+    });
+  }
+  return [...scores.values()]
+    .sort((a, b) => b.score - a.score)
+    .map((s) => ({ ...s.hit, score: s.score }));
 }
 
 const noMemory = (question: string): AskAnswer => ({
@@ -104,8 +136,8 @@ export const answerAsk = async (userId: string, question: string): Promise<AskAn
     return { ...byObject, frame: await frameCitation(byObject.memory_id!) };
   }
 
-  const hits = await vectorSearch(userId, question);
-  if (hits.length === 0 || (hits[0].distance ?? 1) > ASK_COSINE_DISTANCE_MAX) {
+  const hits = await hybridSearch(userId, question);
+  if (hits.length === 0) {
     return noMemory(question);
   }
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiResponse } from "./responses";
-export const reminderSource = z.enum(["voice", "commitment", "summary"]);
+export const reminderSource = z.enum(["voice", "commitment", "summary", "nudge"]);
 export type ReminderSource = z.infer<typeof reminderSource>;
 export const reminderStatus = z.enum(["pending", "done", "dismissed"]);
 export type ReminderStatus = z.infer<typeof reminderStatus>;

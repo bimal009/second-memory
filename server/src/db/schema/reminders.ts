@@ -19,7 +19,7 @@ export const reminders = pgTable("reminders", {
         .notNull()
         .defaultNow(),
 }, (table) => [
-    check("reminders_source_check", sql `${table.source} IN ('voice', 'commitment', 'summary')`),
+    check("reminders_source_check", sql `${table.source} IN ('voice', 'commitment', 'summary', 'nudge')`),
     check("reminders_status_check", sql `${table.status} IN ('pending', 'done', 'dismissed')`),
     index("reminders_due_idx")
         .on(table.dueAt)
