@@ -2,9 +2,11 @@ import { Hono } from "hono";
 import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { eq } from "drizzle-orm";
 import { capturePlanSchema, commandPlanSchema, DEFAULT_DURATION_S, FAST_PATH_CONTROL_COMMANDS, PRE_ROLL_S, WAKE_PREFIX_WORDS, routerRequestSchema, type ApiResponse, type CapturePlan, type CommandPlan, type ExecutedAction, type RouterResult, } from "@repo/types";
 import { db } from "../db/index";
-import { memories, objects, reminders, routerCommands } from "../db/schema";
+import { captures, memories, objects, reminders, routerCommands } from "../db/schema";
+import { enqueueSummary } from "../lib/queue";
 import { intentPlan, transcribe } from "../lib/meta";
 import { convertMono } from "../services/ffmpeg";
 import { answerAsk } from "../lib/ask";
@@ -167,10 +169,49 @@ type ActionContext = {
     lng: number | null;
     captureId: string | null;
 };
+async function latestCapture(userId: string, status: "recording" | "paused") {
+    return db.query.captures.findFirst({
+        where: { userId, status },
+        orderBy: { createdAt: "desc" },
+        columns: { id: true },
+    });
+}
 async function runAction(action: CapturePlan, ctx: ActionContext): Promise<ExecutedAction> {
     try {
         if (action.intent === "control") {
-            return { intent: "control", command: action.command, error: null };
+            const command = action.command;
+            if (command === "pause") {
+                const active = await latestCapture(ctx.userId, "recording");
+                if (!active) {
+                    return { intent: "control", command, error: "no active recording" };
+                }
+                await db
+                    .update(captures)
+                    .set({ status: "paused" })
+                    .where(eq(captures.id, active.id));
+                return { intent: "control", command, error: null };
+            }
+            if (command === "resume") {
+                const paused = await latestCapture(ctx.userId, "paused");
+                if (!paused) {
+                    return { intent: "control", command, error: "nothing paused" };
+                }
+                await db
+                    .update(captures)
+                    .set({ status: "recording" })
+                    .where(eq(captures.id, paused.id));
+                return { intent: "control", command, error: null };
+            }
+            const active = await latestCapture(ctx.userId, "recording");
+            if (!active) {
+                return { intent: "control", command, error: "no active recording" };
+            }
+            await db
+                .update(captures)
+                .set({ status: "ending", endedAt: new Date() })
+                .where(eq(captures.id, active.id));
+            enqueueSummary(active.id).catch((err) => console.error("[router] summary enqueue failed", err));
+            return { intent: "control", command, error: null };
         }
         if (action.intent === "ask") {
             const answer = await answerAsk(ctx.userId, action.question);

@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { auth } from "../src/middleware/auth";
 import { routerRouter } from "../src/routes/router";
 import { db } from "../src/db/index";
@@ -19,6 +19,7 @@ vi.mock("../src/lib/meta", () => ({
     transcribe: vi.fn(),
     chat: vi.fn(),
     vision: vi.fn(),
+    segment: vi.fn(async () => []),
 }));
 vi.mock("../src/lib/ask", () => ({ answerAsk: vi.fn() }));
 
@@ -62,6 +63,7 @@ afterEach(async () => {
     await db.delete(memories).where(eq(memories.userId, userId));
     await db.delete(reminders).where(eq(reminders.userId, userId));
     await db.delete(objects).where(eq(objects.userId, userId));
+    await db.update(captures).set({ status: "recording" }).where(and(eq(captures.userId, userId), inArray(captures.status, ["recording", "paused"])));
     intentPlanMock.mockReset();
     answerAskMock.mockReset();
 });

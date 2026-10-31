@@ -1,0 +1,1 @@
+ALTER TABLE "captures" DROP CONSTRAINT "captures_status_check", ADD CONSTRAINT "captures_status_check" CHECK ("status" IN ('recording', 'paused', 'ending', 'processing', 'ready', 'failed', 'deleting'));

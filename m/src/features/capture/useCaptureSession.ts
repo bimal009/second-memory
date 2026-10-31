@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CameraView } from "expo-camera";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CAPTURE_MAX_MINUTES, CHUNK_DURATION_S, MIN_CHUNK_DURATION_S, type Capture, type CaptureStatus, type CreateChunkSchema, } from "@repo/types";
-import { createCapture, endCapture } from "@/api/capture";
+import { createCapture, endCapture, pauseCapture, resumeCapture } from "@/api/capture";
 import { uploadChunk } from "@/api/chunk";
 import { insertLocalChunk, markChunkStatus } from "@/lib/chunkDb";
 type QueuedChunk = CreateChunkSchema & {
@@ -10,7 +10,7 @@ type QueuedChunk = CreateChunkSchema & {
     capture_id: Capture["id"];
     uri: string;
 };
-type SessionPhase = "idle" | "starting" | Extract<CaptureStatus, "recording"> | "stopping";
+type SessionPhase = "idle" | "starting" | Extract<CaptureStatus, "recording" | "paused"> | "stopping";
 function clock(seconds: number) {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
@@ -173,8 +173,50 @@ export function useCaptureSession(cameraRef: React.RefObject<CameraView | null>)
             setError(err instanceof Error ? err.message : "Could not start capture");
         }
     }, [cameraRef, recordLoop]);
+    const pause = useCallback(async () => {
+        if (phaseRef.current !== "recording") {
+            return;
+        }
+        loopGen.current += 1;
+        try {
+            cameraRef.current?.stopRecording();
+        }
+        catch {
+        }
+        setPhase("paused");
+        const id = captureRef.current?.id;
+        if (!id) {
+            return;
+        }
+        try {
+            const pausedCapture = await pauseCapture(id);
+            setCapture(pausedCapture);
+            captureRef.current = pausedCapture;
+        }
+        catch (err) {
+            setError(err instanceof Error ? err.message : "Could not pause capture");
+        }
+    }, [cameraRef]);
+    const resume = useCallback(async () => {
+        if (phaseRef.current !== "paused" || !captureRef.current) {
+            return;
+        }
+        const active = captureRef.current;
+        try {
+            const resumed = await resumeCapture(active.id);
+            setCapture(resumed);
+            captureRef.current = resumed;
+            const generation = ++loopGen.current;
+            setPhase("recording");
+            await activateKeepAwakeAsync("capture-session");
+            void recordLoop(resumed, generation);
+        }
+        catch (err) {
+            setError(err instanceof Error ? err.message : "Could not resume capture");
+        }
+    }, [recordLoop]);
     const stop = useCallback(async () => {
-        if (phaseRef.current !== "recording" && phaseRef.current !== "starting") {
+        if (phaseRef.current !== "recording" && phaseRef.current !== "starting" && phaseRef.current !== "paused") {
             return;
         }
         setPhase("stopping");
@@ -207,7 +249,9 @@ export function useCaptureSession(cameraRef: React.RefObject<CameraView | null>)
             void start();
         else if (phase === "recording")
             void stop();
-    }, [phase, start, stop]);
+        else if (phase === "paused")
+            void resume();
+    }, [phase, start, stop, resume]);
     return {
         phase,
         capture,
@@ -220,8 +264,11 @@ export function useCaptureSession(cameraRef: React.RefObject<CameraView | null>)
         clearError: () => setError(null),
         start,
         stop,
+        pause,
+        resume,
         toggle,
         recording: phase === "recording",
+        paused: phase === "paused",
         busy: phase === "starting" || phase === "stopping",
     };
 }

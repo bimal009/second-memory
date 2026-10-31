@@ -11,7 +11,7 @@ import {
 import { db } from "../db/index";
 import { memories, objects } from "../db/schema";
 import { embed } from "./embed";
-import { chat, vision } from "./meta";
+import { chat, segment, vision } from "./meta";
 import { STORAGE_ROOT } from "./storage";
 
 export type AskAnswerFrame = { media_id: string; thumbnail_id: string | null; offset_ms: number | null };
@@ -35,10 +35,19 @@ async function frameCitation(memoryId: string): Promise<{ frame: AskAnswerFrame;
   };
 }
 
-export async function locateHighlight(frameKey: string, subject: string): Promise<AskHighlight | null> {
+export async function locateHighlight(frameKey: string, prompt: string): Promise<AskHighlight | null> {
+  const abs = join(STORAGE_ROOT, frameKey);
+  const promptShort = prompt.slice(0, 120);
   try {
-    const raw = await vision(join(STORAGE_ROOT, frameKey), [
-      'Find this in the image: "' + subject.slice(0, 120) + '"',
+    const boxes = await segment(abs, promptShort);
+    if (boxes[0]) return { ...boxes[0], approx: false };
+  }
+  catch (err) {
+    console.warn(`[ask] SAM highlight failed: ${err instanceof Error ? err.message : err}`);
+  }
+  try {
+    const raw = await vision(abs, [
+      'Find this in the image: "' + promptShort + '"',
       "A face must be located when the frame shows a person (privacy) and the subject itself is absent.",
       "If nothing above fits, return x=0,y=0,w=0,h=0.",
       'Return ONLY a JSON object like {"x":0.31,"y":0.22,"w":0.2,"h":0.4} with values in 0..1.',
@@ -68,7 +77,7 @@ export async function locateHighlight(frameKey: string, subject: string): Promis
   }
 }
 
-async function objectAnswer(userId: string, question: string): Promise<AskAnswer | null> {
+async function objectAnswer(userId: string, question: string): Promise<{ answer: AskAnswer; label: string } | null> {
   const labels = await db.query.objects.findMany({
     where: { userId },
     columns: { label: true },
@@ -97,16 +106,19 @@ async function objectAnswer(userId: string, question: string): Promise<AskAnswer
       : `Last seen ${when}.`;
 
   return {
-    question,
-    known: true,
-    answer,
-    memory_id: last.memoryId,
-    frame: null,
-    highlight: null,
-    lat: last.memory.lat,
-    lng: last.memory.lng,
-    last_seen_at: when,
-    usually_here: object.sightings.length >= ASK_USUALLY_MIN_SIGHTINGS,
+    answer: {
+      question,
+      known: true,
+      answer,
+      memory_id: last.memoryId,
+      frame: null,
+      highlight: null,
+      lat: last.memory.lat,
+      lng: last.memory.lng,
+      last_seen_at: when,
+      usually_here: object.sightings.length >= ASK_USUALLY_MIN_SIGHTINGS,
+    },
+    label: object.label,
   };
 }
 
@@ -175,11 +187,11 @@ const noMemory = (question: string): AskAnswer => ({
 export const answerAsk = async (userId: string, question: string): Promise<AskAnswer> => {
   const byObject = await objectAnswer(userId, question);
   if (byObject) {
-    const cited = await frameCitation(byObject.memory_id!);
+    const cited = await frameCitation(byObject.answer.memory_id!);
     return {
-      ...byObject,
+      ...byObject.answer,
       frame: cited?.frame ?? null,
-      highlight: cited ? await locateHighlight(cited.frameKey, question) : null,
+      highlight: cited ? await locateHighlight(cited.frameKey, byObject.label) : null,
     };
   }
 
@@ -213,13 +225,17 @@ export const answerAsk = async (userId: string, question: string): Promise<AskAn
   }
 
   const cited = await frameCitation(hits[0].id);
+  const memory = await db.query.memories.findFirst({
+    where: { id: hits[0].id },
+    columns: { tags: true },
+  });
   return {
     question,
     known: true,
     answer: composed,
     memory_id: hits[0].id,
     frame: cited?.frame ?? null,
-    highlight: cited ? await locateHighlight(cited.frameKey, question) : null,
+    highlight: cited ? await locateHighlight(cited.frameKey, memory?.tags[0] ?? question) : null,
     lat: null,
     lng: null,
     last_seen_at: hits[0].occurredAt.toISOString(),

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming, } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Flashlight, FlashlightOff, FlipHorizontal2, X, } from "lucide-react-native";
+import { Flashlight, FlashlightOff, FlipHorizontal2, Pause, Play, X, } from "lucide-react-native";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/constants/strings";
@@ -151,6 +151,10 @@ export function CaptureScreen() {
             </Text>
           </Pressable>) : null}
 
+        {session.paused ? (<Text variant="caption" style={{ color: colors.destructive, textAlign: "center" }}>
+            {strings.capture.paused}
+          </Text>) : null}
+
         <Text variant="caption" style={[
             styles.hint,
             { color: session.recording ? colors.destructive : tint },
@@ -166,6 +170,17 @@ export function CaptureScreen() {
 
         <View style={styles.dock}>
           <SideSlot>
+            <Tool tint={tint} disabled={!session.recording && !session.paused} onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
+              if (session.paused) {
+                void session.resume();
+              }
+              else {
+                void session.pause();
+              }
+          }} icon={session.paused
+              ? <Play size={iconSize.md - 2} color={onMedia}/>
+              : <Pause size={iconSize.md - 2} color={onMedia}/>}/>
             <Tool large tint={tint} onPress={() => router.push("/ask")} icon={
               <Text variant="caption" style={{ color: onMedia }}>ASK</Text>
             }/>

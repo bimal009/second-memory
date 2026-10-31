@@ -14,6 +14,7 @@ vi.mock("../src/lib/meta", () => ({
     intentPlan: vi.fn(),
     transcribe: vi.fn(),
     vision: vi.fn(),
+    segment: vi.fn(async () => []),
 }));
 vi.mock("../src/lib/embed", () => ({
     embed: vi.fn(async () => new Array(384).fill(1)),

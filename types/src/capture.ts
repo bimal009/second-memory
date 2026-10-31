@@ -4,6 +4,7 @@ export const captureSource = z.enum(["phone", "glasses", "import"]);
 export type CaptureSource = z.infer<typeof captureSource>;
 export const captureStatus = z.enum([
     "recording",
+    "paused",
     "ending",
     "processing",
     "ready",

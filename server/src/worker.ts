@@ -1,5 +1,5 @@
 import { DelayedError, Worker, type Job } from "bullmq";
-import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 import { readdir, rename, rm } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import sharp from "sharp";
@@ -11,6 +11,7 @@ import { captures, chunks, dailyRecaps, memories, media, objects, reminders, sig
 import { redis } from "./lib/redis";
 import { describeChunk, summarizeCapture, transcribe } from "./lib/meta";
 import { embed } from "./lib/embed";
+import { sendPush } from "./lib/push";
 import { CHUNK_QUEUE, enqueueChunk, enqueueSummary, SUMMARY_QUEUE, type ChunkJobData, type SummaryJobData, } from "./lib/queue";
 import { audioPath, chunkPath, ensureDir, frameDir, STORAGE_ROOT, } from "./lib/storage";
 import { convertMono, extractFrame, extractFrames, getMediaInfo, keepFrames, } from "./services/ffmpeg";
@@ -568,6 +569,7 @@ async function summarizeProcessor(job: Job<SummaryJobData>, token?: string) {
             set: { summary: summary.summary, highlights: summary.highlights },
         });
     });
+    await sendPush(capture.userId, "Daily recap ready", summary.summary);
     await db
         .update(captures)
         .set({ status: "ready", processedAt: new Date(), error: null })
@@ -653,7 +655,24 @@ export async function sweepNudges() {
             .update(objects)
             .set({ lastNudgedAt: new Date() })
             .where(eq(objects.id, object.id));
+        await sendPush(object.userId, "Second Memory", `Looks like you left your ${object.label} behind.`);
         console.log(`[worker] nudge: ${object.label} for user ${object.userId}`);
+    }
+}
+
+export async function sweepReminders() {
+    const due = await db
+        .update(reminders)
+        .set({ notifiedAt: new Date() })
+        .where(and(
+            eq(reminders.status, "pending"),
+            isNull(reminders.notifiedAt),
+            lt(reminders.dueAt, new Date()),
+        ))
+        .returning({ id: reminders.id, userId: reminders.userId, text: reminders.text });
+    for (const reminder of due) {
+        await sendPush(reminder.userId, "Reminder", reminder.text);
+        console.log(`[worker] reminder ${reminder.id} pushed`);
     }
 }
 let sweepInterval: NodeJS.Timeout | null = null;
@@ -686,6 +705,7 @@ export function startSweeps() {
     sweepInterval = setInterval(() => {
         void sweepOnce().catch((err) => console.error("[sweep] error", err));
         void sweepNudges().catch((err) => console.error("[nudge] error", err));
+        void sweepReminders().catch((err) => console.error("[reminders] error", err));
     }, SWEEP_INTERVAL_S * 1000);
     sweepInterval.unref?.();
 }

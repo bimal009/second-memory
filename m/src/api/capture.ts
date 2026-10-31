@@ -22,6 +22,18 @@ export async function endCapture(id: string): Promise<Capture> {
         throw new Error("Capture end returned no data");
     return capture;
 }
+export async function pauseCapture(id: string): Promise<Capture> {
+    const { data: capture } = await axiosInstance.post<Capture>(`/captures/${id}/pause`);
+    if (!capture)
+        throw new Error("Capture pause returned no data");
+    return capture;
+}
+export async function resumeCapture(id: string): Promise<Capture> {
+    const { data: capture } = await axiosInstance.post<Capture>(`/captures/${id}/resume`);
+    if (!capture)
+        throw new Error("Capture resume returned no data");
+    return capture;
+}
 export async function deleteCapture(id: string): Promise<void> {
     await axiosInstance.delete<null>(`/captures/${id}`);
 }

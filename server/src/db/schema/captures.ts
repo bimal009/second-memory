@@ -16,7 +16,7 @@ export const captures = pgTable("captures", {
     processedAt: timestamp("processed_at", { withTimezone: true }),
 }, (table) => [
     check("captures_source_check", sql `${table.source} IN ('phone', 'glasses', 'import')`),
-    check("captures_status_check", sql `${table.status} IN ('recording', 'ending', 'processing', 'ready', 'failed', 'deleting')`),
+    check("captures_status_check", sql `${table.status} IN ('recording', 'paused', 'ending', 'processing', 'ready', 'failed', 'deleting')`),
     index("captures_user_created_idx").on(table.userId, table.createdAt.desc()),
     index("captures_open_idx")
         .on(table.createdAt)
