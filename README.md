@@ -65,6 +65,51 @@ Offline retrieval eval, no model calls:
 pnpm --filter server exec tsx scripts/ask-eval.ts
 ```
 
+## Flow
+
+```mermaid
+flowchart TD
+    subgraph PHONE[Phone: Expo app]
+        CAM[Camera + mic] -->|30s chunks| REC[Record loop + pause/resume]
+        REC --> Q[Local upload queue]
+    end
+
+    subgraph SERVER[Server: Hono + BullMQ]
+        API[POST /captures/:id/chunks<br/>idempotent, lat/lng] -->|enqueue| REDIS[(Redis queues)]
+        REDIS --> CW[Chunk worker<br/>processes chunks in order]
+        CW --> FF[ffmpeg: frames every 4s,<br/>phash dedupe, mono WAV]
+        FF --> ASR[Muse Voice Transcribe]
+        FF --> SPARK[Muse Spark 1.3: note, tags,<br/>objects, commitments, face boxes]
+        SPARK --> BLUR[sharp: blur faces]
+        BLUR --> TX[One tx: memory + frames,<br/>thumbs, sightings, reminders]
+        TX --> DEL[Delete raw video and audio]
+        CW --> MOM[Finalize bookmark windows]
+    end
+
+    subgraph ENDING[Capture end]
+        REDIS --> SW[Summary worker]
+        SW --> SPARK2[Muse Spark 1.3:<br/>summary + action items]
+        SPARK2 --> RECAP[Daily recap + reminders]
+        RECAP --> PUSH[Expo push to phone]
+    end
+
+    subgraph ASKF[Ask later]
+        USER[Question] --> OBJ{Tracked object<br/>in the question?}
+        OBJ -->|yes| SQL[Latest sighting answer<br/>+ usually-here rule]
+        SQL --> HC[frame citation]
+        OBJ -->|no| HYB[pgvector top-k plus full-text top-k]
+        HYB --> RRF[Reciprocal rank fusion]
+        RRF --> GROUND[Grounded Muse answer<br/>or honest no memory]
+        GROUND --> HC
+        HC --> SAM[SAM 3.1: subject box<br/>approx fallback: Spark]
+        SAM --> REPLY[Answer + frame + highlight,<br/>spoken via expo-speech]
+    end
+
+    Q --> API
+    SW -->|sets ending to ready| REDIS
+    MOM --> REDIS
+```
+
 ## Trying it
 
 1. Start the server and the Expo app, connect a phone.
