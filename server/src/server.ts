@@ -14,7 +14,14 @@ import { askRouter } from "./routes/ask";
 import { privacyRouter } from "./routes/privacy";
 import { recapRouter } from "./routes/recap";
 import { auth } from "./middleware/auth";
-import { startChunkWorker, stopChunkWorker } from "./worker";
+import {
+  startChunkWorker,
+  startSummaryWorker,
+  startSweeps,
+  stopChunkWorker,
+  stopSummaryWorker,
+  stopSweeps,
+} from "./worker";
 import { redis } from "./lib/redis";
 import { sql } from "drizzle-orm";
 import { db } from "./db/index";
@@ -109,13 +116,17 @@ try {
   await bootChecks();
   server = serve({ fetch: app.fetch, port: 8000 });
   await startChunkWorker();
+  await startSummaryWorker();
+  startSweeps();
 } catch (err) {
   console.error("[boot] failed, exiting:", err);
   process.exit(1);
 }
 
 async function shutdown() {
+  stopSweeps();
   await stopChunkWorker();
+  await stopSummaryWorker();
   server?.close();
   await closeDb();
   redis.disconnect();

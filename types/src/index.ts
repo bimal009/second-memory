@@ -11,3 +11,4 @@ export * from "./router";
 export * from "./ask";
 export * from "./privacy";
 export * from "./recap";
+export * from "./understanding";

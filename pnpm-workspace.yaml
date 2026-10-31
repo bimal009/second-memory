@@ -7,4 +7,6 @@ allowBuilds:
   esbuild: false
   ffmpeg-static: false
   msgpackr-extract: false
+  onnxruntime-node: true
+  protobufjs: true
   unrs-resolver: true
