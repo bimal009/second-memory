@@ -12,8 +12,7 @@ everything, in one tap.
 
 ## What it calls on Meta's side
 
-Everything runs through the Meta Model API (muse-spark-1.3), kept to one call
-per job:
+Everything runs through the Meta Model API, kept to one call per job:
 
 | Job | Call |
 |---|---|
@@ -21,7 +20,7 @@ per job:
 | Capture summary + action items | chat |
 | Voice command intent plan | chat |
 | Ask answer composed from retrieved notes | chat |
-| Subject highlight box on the cited frame | vision |
+| Subject highlight box on the cited frame | segmentation (sam-3.1, Spark fallback) |
 | Chunk speech to text | muse-voice-transcribe |
 
 Embeddings are the one piece the API does not cover, so a small open model
