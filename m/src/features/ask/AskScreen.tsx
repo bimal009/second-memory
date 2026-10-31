@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { ActivityIndicator, TextInput, View, StyleSheet } from "react-native";
 import * as Speech from "expo-speech";
-import { Volume2 } from "lucide-react-native";
+import { Volume2, Play } from "lucide-react-native";
 import { askQuestion } from "@/api/ask";
+import { playLocalClipForMemory } from "@/lib/clipLaunch";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ScreenContainer } from "@/components/ui/ScreenContainer";
+import { ThumbImage } from "@/components/media/ThumbImage";
 import { Text } from "@/components/ui/Text";
+import { strings } from "@/constants/strings";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
 import type { AskAnswer } from "@repo/types";
@@ -80,6 +83,45 @@ export function AskScreen() {
                                 {answer.known ? "ANSWER" : "NO MEMORY"}
                             </Text>
                             <Text variant="bodyMedium">{answer.answer}</Text>
+                            {answer.frame?.thumbnail_id ? (
+                                <View style={styles.frameWrap}>
+                                    <ThumbImage
+                                        mediaId={answer.frame.thumbnail_id}
+                                        height={210}
+                                    />
+                                    {answer.highlight ? (
+                                        <View
+                                            style={{
+                                                position: "absolute",
+                                                left: `${answer.highlight.x * 100}%`,
+                                                top: `${answer.highlight.y * 100}%`,
+                                                width: `${answer.highlight.w * 100}%`,
+                                                height: `${answer.highlight.h * 100}%`,
+                                                borderWidth: 3,
+                                                borderRadius: 6,
+                                                borderColor: colors.primary,
+                                                shadowColor: colors.primary,
+                                                shadowOpacity: 0.6,
+                                                shadowRadius: 8,
+                                                shadowOffset: { width: 0, height: 0 },
+                                            }}
+                                        />
+                                    ) : null}
+                                    {answer.highlight?.approx ? (
+                                        <Text variant="caption" color="mutedForeground" style={styles.pictureCaption}>
+                                            Subject location is approximate.
+                                        </Text>
+                                    ) : null}
+                                </View>
+                            ) : null}
+                            {answer.memory_id ? (
+                                <Button
+                                    label={strings.memories.detail.playClip}
+                                    variant="secondary"
+                                    icon={<Play size={18} color={colors.primary}/>}
+                                    onPress={() => void playLocalClipForMemory(answer.memory_id as string)}
+                                />
+                            ) : null}
                             {lastSeen ? (
                                 <Text color="mutedForeground" variant="caption">
                                     {`Last seen ${lastSeen}${answer.usually_here ? " · usually there" : ""}`}
@@ -110,4 +152,6 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.sm,
     },
     answer: { gap: spacing.sm },
+    frameWrap: { gap: spacing.xs },
+    pictureCaption: { textAlign: "center" },
 });

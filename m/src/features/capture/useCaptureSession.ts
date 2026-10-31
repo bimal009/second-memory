@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 import type { CameraView } from "expo-camera";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CAPTURE_MAX_MINUTES, CHUNK_DURATION_S, MIN_CHUNK_DURATION_S, type Capture, type CaptureStatus, type CreateChunkSchema, } from "@repo/types";
@@ -184,6 +185,7 @@ export function useCaptureSession(cameraRef: React.RefObject<CameraView | null>)
         catch {
         }
         setPhase("paused");
+        await deactivateKeepAwake("capture-session");
         const id = captureRef.current?.id;
         if (!id) {
             return;
@@ -197,6 +199,14 @@ export function useCaptureSession(cameraRef: React.RefObject<CameraView | null>)
             setError(err instanceof Error ? err.message : "Could not pause capture");
         }
     }, [cameraRef]);
+    useEffect(() => {
+        const subscription = AppState.addEventListener("change", (state) => {
+            if (state === "background" && phaseRef.current === "recording") {
+                void pause();
+            }
+        });
+        return () => subscription.remove();
+    }, [pause]);
     const resume = useCallback(async () => {
         if (phaseRef.current !== "paused" || !captureRef.current) {
             return;

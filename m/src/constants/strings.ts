@@ -116,6 +116,8 @@ export const strings = {
             deleteConfirmBody: "This clip, transcript and location will be permanently removed from this phone.",
             deleted: "Memory deleted",
             clipDuration: "{sec}s clip",
+            playClip: "Play phone clip",
+            clipMissing: "The clip for this memory is no longer on this phone.",
         },
     },
     today: {
@@ -163,6 +165,36 @@ export const strings = {
     locationCard: {
         openInMaps: "Open in Maps",
         coords: "{lat}, {lng}",
+    },
+    library: {
+        title: "Your memories",
+        subtitle: "Everything {name} has seen recently.",
+        today: "Today",
+        objects: "Objects",
+        reminders: "Reminders",
+        framesTitle: "Frames",
+        noFrames: "No frames",
+        clipTitle: "Phone clip",
+    },
+    trackedList: {
+        title: "Tracked objects",
+        subtitle: "Objects {name} keeps an eye on.",
+        empty: "Nothing tracked yet. Name a thing in a voice command, like 'track my backpack'.",
+        untrack: "Stop tracking",
+        untrackBody: "Stop tracking this? Past sightings stay, but no new nudge.",
+        untracked: "Stopped tracking",
+    },
+    remindersList: {
+        title: "Reminders",
+        subtitle: "Things {name} heard you commit to.",
+        empty: "Nothing coming up.",
+        done: "Done",
+        dismiss: "Dismiss",
+    },
+    recap: {
+        title: "Today, remembered.",
+        subtitle: "The important parts, all in one place.",
+        empty: "No recap yet. Finish a session and one will appear here at the end of the day.",
     },
     common: {
         back: "Back",

@@ -38,6 +38,9 @@ type MemoryRow = {
         storageKey: string;
         offsetMs: number | null;
     }[];
+    chunk: {
+        idx: number;
+    } | null;
 };
 const MEMORY_COLUMNS = {
     id: true,
@@ -65,10 +68,16 @@ const MEMORY_MEDIA = {
         offsetMs: true,
     },
 } as const;
+const MEMORY_CHUNK = {
+    columns: {
+        idx: true,
+    },
+} as const;
 const toMemory = (row: MemoryRow): Memory => ({
     id: row.id,
     capture_id: row.captureId,
     chunk_id: row.chunkId,
+    chunk_idx: row.chunk?.idx ?? null,
     kind: row.kind as Memory["kind"],
     status: row.status as Memory["status"],
     note: row.note,
@@ -111,7 +120,7 @@ memoriesRouter.get("/", async (c) => {
         orderBy: { occurredAt: "desc" },
         limit,
         columns: MEMORY_COLUMNS,
-        with: { media: MEMORY_MEDIA },
+        with: { media: MEMORY_MEDIA, chunk: MEMORY_CHUNK },
     })) as unknown as MemoryRow[];
     return c.json<ApiResponse<Memory[]>>({
         status: 200,
@@ -133,7 +142,7 @@ memoriesRouter.get("/:id", async (c) => {
     const row = (await db.query.memories.findFirst({
         where: { id: parsed.data.id, userId: c.get("userId") },
         columns: MEMORY_COLUMNS,
-        with: { media: MEMORY_MEDIA },
+        with: { media: MEMORY_MEDIA, chunk: MEMORY_CHUNK },
     })) as unknown as MemoryRow | undefined;
     if (!row) {
         return c.json<ApiResponse<null>>({

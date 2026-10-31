@@ -4,6 +4,7 @@ export const memorySchema = z.object({
     id: z.string().uuid(),
     capture_id: z.string().uuid(),
     chunk_id: z.string().uuid().nullable(),
+    chunk_idx: z.number().int().nullable(),
     kind: z.enum(["moment", "session_chunk", "session_summary"]),
     status: z.enum(["pending", "ready"]),
     note: z.string(),

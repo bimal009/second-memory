@@ -193,7 +193,10 @@ export function CaptureScreen() {
           </Pressable>
 
           <SideSlot>
-            <Tool large tint={tint} onPress={() => {
+            <Tool large tint={tint} onPress={() => router.push("/memories")} accessibilityLabel="Your memories" icon={
+              <Text variant="caption" style={{ color: onMedia }}>MEMS</Text>
+            }/>
+            <Tool tint={tint} onPress={() => {
             setTorch(false);
             setFacing((f) => (f === "back" ? "front" : "back"));
         }} icon={<FlipHorizontal2 size={iconSize.md} color={onMedia}/>}/>
@@ -202,16 +205,17 @@ export function CaptureScreen() {
       </View>
     </View>);
 }
-function Tool({ icon, onPress, disabled, large, tint, active, }: {
+function Tool({ icon, onPress, disabled, large, tint, active, accessibilityLabel, }: {
     icon: React.ReactNode;
     onPress: () => void;
     disabled?: boolean;
     large?: boolean;
     tint: string;
     active?: boolean;
+    accessibilityLabel?: string;
 }) {
     const size = large ? touchTarget + 4 : touchTarget - 4;
-    return (<Pressable disabled={disabled} onPress={onPress} style={({ pressed }) => [
+    return (<Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} disabled={disabled} onPress={onPress} style={({ pressed }) => [
             {
                 width: size,
                 height: size,
