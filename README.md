@@ -1,17 +1,39 @@
 # Second Memory
 
-A phone (standing in for Meta AI glasses) records continuously in 30-second
-chunks. The server turns each chunk into frames + transcript + an AI-written
-note, stores timestamped memories with citations, and answers spoken questions
-("where did I park?") with the exact frame, location and time.
+Entry for the Meta Global AI Developer Hackathon (Build for Your World).
 
-## Monorepo
+A phone in your pocket stands in for Meta AI glasses. It records continuously
+in 30-second chunks. The server turns every chunk into frames, a transcript
+and a one-sentence note in the past tense. Hours later you can ask plain
+questions like "where did I park?" and get a real answer: the time, the
+location, the exact frame from that moment, and the answer spoken out loud.
+Faces are blurred on the stored frames. You can delete any capture, or
+everything, in one tap.
+
+## What it calls on Meta's side
+
+Everything runs through the Meta Model API (muse-spark-1.3), kept to one call
+per job:
+
+| Job | Call |
+|---|---|
+| Chunk understanding of frames + transcript | vision |
+| Capture summary + action items | chat |
+| Voice command intent plan | chat |
+| Ask answer composed from retrieved notes | chat |
+| Subject highlight box on the cited frame | vision |
+| Chunk speech to text | muse-voice-transcribe |
+
+Embeddings are the one piece the API does not cover, so a small open model
+(all-MiniLM-L6-v2, 384 dims) runs locally. No video is kept server-side.
+
+## Repo layout
 
 | Folder | What |
 |---|---|
-| `server/` | Hono API + BullMQ workers (ffmpeg frames/phash, ASR, describe, summarize, ask, sweeps) |
-| `m/` | Expo mobile app: 30s chunk recorder, offline queue, router button, ask screen |
-| `types/` | Shared zod schemas + tunable constants (`@repo/types`) |
+| `server/` | Hono API + BullMQ workers (ffmpeg frames, phash, ASR, describe, summarize, ask, sweeps) |
+| `m/` | Expo mobile app: 30s chunk recorder, offline upload queue, router button, ask screen with speech |
+| `types/` | Shared zod schemas + every tunable constant (`@repo/types`) |
 
 ## Setup
 
@@ -21,86 +43,92 @@ pnpm -r typecheck
 pnpm test
 ```
 
-Server needs: Postgres + `pgvector`, `pg_trgm` + `vector` extensions, Redis,
+Server needs Postgres with the `vector` and `pg_trgm` extensions, Redis, and
 ffmpeg/ffprobe on PATH. Fill `server/.env` (`DATABASE_URL`, `REDIS_URL`,
-`MODEL_API_KEY`) then:
+`MODEL_API_KEY`), then:
 
 ```bash
 pnpm --filter server db:migrate
 pnpm --filter server db:generate   # after editing server/src/db/schema
-pnpm --filter server dev           # boot checks ffmpeg/ffprobe/redis/db, then serves :8000
+pnpm --filter server dev           # boot checks ffmpeg/redis/db, then serves :8000
 ```
 
-Seed a demo user (prints an API key for the phone):
+Seed a demo user (prints an API key to put on the phone):
 
 ```bash
 pnpm --filter server exec tsx scripts/seed.ts
 ```
 
-Offline retrieval eval (local embeddings only, zero model calls):
+Offline retrieval eval, no model calls:
 
 ```bash
 pnpm --filter server exec tsx scripts/ask-eval.ts
 ```
 
-## How memory is made
+## Trying it
 
-1. Phone uploads 30s chunks (`POST /captures/:id/chunks`, idempotent, lat/lng attached).
-2. Worker: ffmpeg frames every 4s (cap 8, forced spread for very short chunks),
-   perceptual-hash dedupe vs the previous chunk, 16kHz mono WAV -> ASR, then
-   one Muse vision call returns a strict `ChunkUnderstanding` JSON
-   (note, tags, objects seen, verbal commitments with times).
-3. Local 384-dim MiniLM embedding (transformers.js — Meta's API doesn't expose
-   embeddings, selected in Week 2; see fallbacks below). One transaction writes
-   the memory, frame/thumbnail media, object sightings and reminders.
-   Raw video/WAV is deleted immediately after (privacy receipt endpoint
-   reflects this); frames stay referenced, not re-derivable video.
-4. Capture end: summary job waits for tail chunks, one Muse call makes the
-   run summary + action items, upserts the daily recap, finishes pending
-   bookmarks, marks the capture ready.
+1. Start the server and the Expo app, connect a phone.
+2. Hold record. Chunks upload every 30 seconds even if the app closes.
+3. Tap the ASK button and type "where did I park?" or "where are my keys?".
+   The answer is spoken back and cites the frame it came from.
+4. Or press and speak: "bookmark this", "remind me to file taxes by Friday at 5",
+   "track my keys". Bare words like "pause", "resume" and "stop" act instantly
+   with no model call.
+5. End the capture: summary, action items and the daily recap land as memories.
 
-## Ranking (ask)
+## How a capture becomes memories
 
-- **SQL-first object path**: labels of tracked (and seen) objects matched as
-  words in the question; latest sighting wins; ≥3 sightings marks
-  "usually_here"; answer cites the sighting's memory + frame/thumbnail.
-- **Hybrid memory fallback, fused with RRF**: top-k by pgvector cosine over
-  local embeddings ∪ top-k full-text (`tsvector` GIN index) hits, fused with
-  reciprocal rank fusion (`ASK_RRF_K=60`). A memory ranked by both retrieval
-  modes lands first automatically; full-text-only hits still count.
-- One grounded Muse call composes the answer from the fused notes only;
-  template answer if the call fails; honest "I have no memory of that."
-  when nothing eligible (vector cosine band `ASK_COSINE_DISTANCE_MAX=0.5`
-  and no full-text hit). Pending memories are never retrievable.
+1. The phone uploads 30s chunks (`POST /captures/:id/chunks`, idempotent, lat/lng attached).
+2. A worker samples frames every 4 seconds (up to 8), dedupes lookalikes
+   against the previous chunk with perceptual hashes, extracts a 16kHz mono
+   WAV, and waits for the previous chunk so notes stay in order.
+3. One vision call returns the note, tags, visible objects, spoken commitments
+   with resolved times, and face boxes. Faces are blurred with sharp before anything is stored.
+4. One transaction writes the memory, frame and thumbnail rows, object
+   sightings, and any reminders. The raw video and WAV are deleted in the
+   same job; the privacy endpoint shows exactly what the server is holding.
+5. On capture end, one chat call produces the run summary and action items,
+   pending bookmarks are finalized, and the daily recap is upserted.
 
-## Voice commands
+## How ask finds the answer
 
-`POST /router` (audio or text, idempotent by `command_id`): bare control
-commands (`pause`, `resume`, `stop`) apply instantly with no model call;
-everything else — fillers included — goes to Muse's strict intent plan
-(bookmark with [press−20s, press+duration] window, reminders with stated
-times only, track/untrack labels, ask, clarify). Outputs an ordered executed
-action list; ask answers come back in the same response.
+Questions go through two paths, memory only after the first:
+
+- **Object path first.** If the question names a tracked object, the latest
+  sighting answers it directly. Three or more sightings in the area flips in
+  a "you usually leave it around there" note.
+- **Hybrid retrieval fallback.** Top-k by pgvector cosine over the question
+  embedding, unioned with top-k full-text hits over memory notes, then
+  reciprocal rank fusion (`ASK_RRF_K=60`). A memory that both modes agree on
+  rises first. One grounded chat call composes the answer from those notes
+  and nothing else. If nothing clears the bar, the answer is honestly
+  "I have no memory of that."
+- When the cited frame exists, one extra vision call locates the subject on
+  it and returns an approximate highlight box.
+
+Pending memories are never retrievable, by either path.
 
 ## Privacy
 
-- The raw chunk never leaves the phone except transiently on the originating
-  server during processing; deleted in the same job that stores the memory
-  (`chunks_holding_raw` is visible on `GET /privacy`).
-- Kept key frames, thumbnails and text only; no video stored server-side.
-- Delete one capture or everything server-side (`DELETE /captures/:id`,
-  `DELETE /captures`); the mobile app mirrors local deletion.
+- Raw video and audio exist only for the seconds it takes to process a chunk,
+  then they are gone. `GET /privacy` shows what the server currently holds.
+- What persists: key frames (faces blurred), thumbnails, notes, and text. No video.
+- Delete one capture or the whole account server-side and the phone mirrors it
+  (`DELETE /captures/:id`, `DELETE /captures`).
+- Location stays on the server as a single lat/lng per memory, used only to answer.
 
-## Fallbacks (as recorded in FALLBACKS.md decisions)
+## Voice commands
 
-- Embeddings: local `all-MiniLM-L6-v2` via transformers.js (Meta Model API
-  exposes no embeddings endpoint).
-- ASR: Meta voice-transcribe model through multipart; text mode fallback.
-- Wake word: on-device speech streaming first; chunk-transcript detection as
-  fallback.
-- SAM highlight: lazy on ask; model-drawn approximate box if unavailable.
-- Face blur: model-returned normalized boxes + sharp blur; off if unreliable.
+`POST /router` takes audio or text and is idempotent by `command_id`.
+Bare controls apply instantly. Everything else, fillers included, goes to the
+intent model, which returns up to four ordered actions: bookmark (window
+anchors at press time minus 20s through press plus spoken duration), reminders
+(only times actually stated out loud), track/untrack, ask, or a clarifying
+question. Ask answers ride back inside the same HTTP response.
 
-## Folders note
+## Notes
 
-Spec aliases `api/` `mobile/` map to this repo's `server/` `m/`.
+- Spec folders `api/`/`mobile/` map to `server/`/`m/` here.
+- Tests cover 35 cases across six files against a real database: plan schemas,
+  the full command surface, idempotency, window rules, the finalizer, ask
+  ranking and nudges.
